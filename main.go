@@ -2,8 +2,13 @@ package main
 
 import (
 	"log"
+	"net"
+
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	"github.com/WaffleHacks/mailer/logging"
+	"github.com/WaffleHacks/mailer/rpc"
 )
 
 func main() {
@@ -17,4 +22,19 @@ func main() {
 		log.Fatalf("failed to initialize logging: %v\n", err)
 	}
 	defer logger.Sync()
+
+	// Acquire the gRPC listener
+	listener, err := net.Listen("tcp", config.GRPCAddress)
+	if err != nil {
+		logger.Fatal("failed to listen on address", zap.Error(err), zap.String("address", config.GRPCAddress))
+	}
+
+	// Start the gRPC server
+	server := rpc.New()
+	go func() {
+		logger.Named("grpc").Info("listening and ready to handle requests", zap.String("address", config.GRPCAddress))
+		if err := server.Serve(listener); err != nil && err != grpc.ErrServerStopped {
+			logger.Fatal("an error occurred while running the server", zap.Error(err))
+		}
+	}()
 }
