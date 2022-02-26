@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/k3a/html2text"
 	gonanoid "github.com/matoous/go-nanoid"
 	"go.uber.org/zap"
 )
@@ -34,12 +35,23 @@ func worker(ctx context.Context, queue <-chan Message, wg *sync.WaitGroup) {
 	for {
 		select {
 		case message := <-queue:
+			plain, html := makeBodies(message.Body, message.Type)
+			fmt.Println(plain, html)
+
 			// TODO: actually send messages
-			fmt.Printf("%+v\n", message)
 
 		case <-ctx.Done():
 			l.Info("worker exited")
 			wg.Done()
 		}
 	}
+}
+
+// makeBodies creates a plain text and, optionally, a HTML body based on the provided type
+func makeBodies(content string, bodyType BodyType) (string, *string) {
+	if bodyType == BodyTypePlain {
+		return content, nil
+	}
+
+	return html2text.HTML2Text(content), &content
 }
