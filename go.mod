@@ -6,6 +6,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.3
 	github.com/joho/godotenv v1.4.0
+	github.com/matoous/go-nanoid v1.5.0
 	go.uber.org/zap v1.21.0
 	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf
 	google.golang.org/grpc v1.44.0

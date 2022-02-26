@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -16,6 +17,8 @@ type Config struct {
 
 	LogLevel    zap.AtomicLevel
 	Development bool
+
+	Workers int
 }
 
 // ReadConfig extracts all the configuration options from the environment variables
@@ -37,11 +40,17 @@ func ReadConfig() (*Config, error) {
 	rawDevelopment := strings.ToLower(getEnvOrDefault("MAILER_DEVELOPMENT", "no"))
 	development := rawDevelopment == "y" || rawDevelopment == "yes" || rawDevelopment == "t" || rawDevelopment == "true"
 
+	workers, err := strconv.Atoi(getEnvOrDefault("MAILER_WORKERS", "1"))
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		GRPCAddress: net.JoinHostPort(address, grpcPort),
 		HTTPAddress: net.JoinHostPort(address, httpPort),
 		LogLevel:    level,
 		Development: development,
+		Workers:     workers,
 	}, nil
 }
 

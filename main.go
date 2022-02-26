@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
+	"github.com/WaffleHacks/mailer/daemon"
 	"github.com/WaffleHacks/mailer/logging"
 	"github.com/WaffleHacks/mailer/rpc"
 )
@@ -28,6 +29,9 @@ func main() {
 		log.Fatalf("failed to initialize logging: %v\n", err)
 	}
 	defer logger.Sync()
+
+	// Setup the mailer daemon
+	mailer := daemon.New(config.Workers)
 
 	// Acquire the gRPC listener
 	listener, err := net.Listen("tcp", config.GRPCAddress)
@@ -68,6 +72,9 @@ func main() {
 	server.GracefulStop()
 	if err := gateway.Shutdown(shutdownCtx); err != nil {
 		logger.Named("http").Fatal("failed to shutdown gateway", zap.Error(err))
+	}
+	if err := mailer.Shutdown(shutdownCtx); err != nil {
+		logger.Named("daemon").Fatal("failed to shutdown daemon", zap.Error(err))
 	}
 
 	logger.Info("shutdown complete. goodbye!")
