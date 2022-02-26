@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -37,7 +38,11 @@ func NewGateway(grpcAddress, httpAddress string) (*http.Server, error) {
 
 	// Create a wrapping mux
 	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
 	r.Use(logging.Request(zap.L().Named("http")))
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Heartbeat("/ping"))
 	r.Handle("/docs/*", documentation)
 	r.Handle("/*", mux)
 
