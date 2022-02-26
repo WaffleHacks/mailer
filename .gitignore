@@ -141,3 +141,6 @@ modules.xml
 .ionide
 
 # Support for Project snippet scope
+
+### Project Files ###
+.env
