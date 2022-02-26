@@ -3,6 +3,7 @@ module github.com/WaffleHacks/mailer
 go 1.17
 
 require (
+	github.com/go-chi/chi/v5 v5.0.7
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.3
 	github.com/joho/godotenv v1.4.0
 	go.uber.org/zap v1.21.0

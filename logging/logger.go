@@ -5,6 +5,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var developmentOption = false
+
 // New generates a new logger from a standard configuration
 func New(level zap.AtomicLevel, development bool) (*zap.Logger, error) {
 	var encoding string
@@ -46,6 +48,7 @@ func New(level zap.AtomicLevel, development bool) (*zap.Logger, error) {
 	}
 
 	zap.ReplaceGlobals(logger)
+	developmentOption = development
 
 	return logger, nil
 }

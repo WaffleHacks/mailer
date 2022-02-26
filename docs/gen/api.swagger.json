@@ -1,0 +1,231 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Mailer Service",
+    "version": "1.0",
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/WaffleHacks/mailer/blob/master/LICENSE.md"
+    }
+  },
+  "tags": [
+    {
+      "name": "MailerService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/send": {
+      "post": {
+        "summary": "Send",
+        "description": "Send a single email message to a recipient",
+        "operationId": "MailerService_Send",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SendResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SendRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MailerService"
+        ]
+      }
+    },
+    "/send/batch": {
+      "post": {
+        "summary": "SendBatch",
+        "description": "Send a single message to multiple recipients",
+        "operationId": "MailerService_SendBatch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SendBatchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SendBatchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MailerService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1BodyType": {
+      "type": "string",
+      "enum": [
+        "BODY_TYPE_PLAIN",
+        "BODY_TYPE_HTML"
+      ]
+    },
+    "v1SendBatchRequest": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of the recipient email addresses",
+          "required": [
+            "to"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "description": "The email address of the sender in RFC 5322 format",
+          "required": [
+            "from"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject line of the message",
+          "required": [
+            "subject"
+          ]
+        },
+        "body": {
+          "type": "string",
+          "description": "The main content of the message",
+          "required": [
+            "body"
+          ]
+        },
+        "type": {
+          "$ref": "#/definitions/v1BodyType",
+          "description": "The content type of the message, either HTML or plaintext"
+        },
+        "replyTo": {
+          "type": "string",
+          "description": "The address for the Reply-To header"
+        }
+      },
+      "required": [
+        "to",
+        "from",
+        "subject",
+        "body"
+      ]
+    },
+    "v1SendBatchResponse": {
+      "type": "object"
+    },
+    "v1SendRequest": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "type": "string",
+          "description": "The email address of the recipient",
+          "required": [
+            "to"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "description": "The email address of the sender in RFC 5322 format",
+          "required": [
+            "from"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject line of the message",
+          "required": [
+            "subject"
+          ]
+        },
+        "body": {
+          "type": "string",
+          "description": "The main content of the message",
+          "required": [
+            "body"
+          ]
+        },
+        "type": {
+          "$ref": "#/definitions/v1BodyType",
+          "description": "The content type of the message, either HTML or plaintext"
+        },
+        "replyTo": {
+          "type": "string",
+          "description": "The address for the Reply-To header"
+        }
+      },
+      "required": [
+        "to",
+        "from",
+        "subject",
+        "body"
+      ]
+    },
+    "v1SendResponse": {
+      "type": "object"
+    }
+  }
+}
