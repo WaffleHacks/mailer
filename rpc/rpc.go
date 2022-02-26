@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"net/mail"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -55,5 +56,51 @@ func (m *mailerServer) SendBatch(_ context.Context, in *mailerv1.SendBatchReques
 
 // Do the work of processing the messages
 func (m *mailerServer) process(logger *zap.Logger, in *mailerv1.SendBatchRequest) *status.Status {
-	return status.New(codes.Unimplemented, "unimplemented")
+	// Ensure all inputs exist
+	if len(in.To) == 0 {
+		return status.New(codes.InvalidArgument, "to is required")
+	}
+	if len(in.From) == 0 {
+		return status.New(codes.InvalidArgument, "from is required")
+	}
+	if len(in.Subject) == 0 {
+		return status.New(codes.InvalidArgument, "subject is required")
+	}
+	if len(in.Body) == 0 {
+		return status.New(codes.InvalidArgument, "body is required")
+	}
+
+	// Validate the email addresses have the proper format
+	if _, err := mail.ParseAddress(in.From); err != nil {
+		logger.Warn("invalid from email address format", zap.String("from", in.From))
+		return status.New(codes.InvalidArgument, "invalid from email address format")
+	}
+	for _, to := range in.To {
+		if _, err := mail.ParseAddress(to); err != nil {
+			logger.Warn("invalid to email address format", zap.String("to", to))
+			return status.New(codes.InvalidArgument, "invalid to email address format")
+		}
+	}
+
+	// Set defaults
+	bodyType := in.Type
+	if bodyType == mailerv1.BodyType_BODY_TYPE_UNSPECIFIED {
+		bodyType = mailerv1.BodyType_BODY_TYPE_PLAIN
+	}
+	var replyTo *string
+	if len(in.ReplyTo) != 0 {
+		replyTo = &in.ReplyTo
+	}
+
+	// Enqueue the message for sending
+	m.queue <- daemon.Message{
+		To:      in.To,
+		From:    in.From,
+		Subject: in.Subject,
+		Body:    in.Body,
+		Type:    daemon.BodyType(bodyType),
+		ReplyTo: replyTo,
+	}
+
+	return nil
 }
