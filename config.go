@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -46,11 +45,6 @@ func ReadConfig() (*Config, error) {
 	rawDevelopment := strings.ToLower(getEnvOrDefault("MAILER_DEVELOPMENT", "no"))
 	development := rawDevelopment == "y" || rawDevelopment == "yes" || rawDevelopment == "t" || rawDevelopment == "true"
 
-	workers, err := strconv.Atoi(getEnvOrDefault("MAILER_WORKERS", "1"))
-	if err != nil {
-		return nil, err
-	}
-
 	// Register all the providers
 	enabledProviders := strings.Split(os.Getenv("MAILER_PROVIDERS"), ",")
 	configuredProviders := make(map[string]providers.Provider)
@@ -80,7 +74,6 @@ func ReadConfig() (*Config, error) {
 		HTTPAddress: net.JoinHostPort(address, httpPort),
 		LogLevel:    level,
 		Development: development,
-		Workers:     workers,
 		Providers:   configuredProviders,
 	}, nil
 }

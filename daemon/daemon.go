@@ -3,6 +3,8 @@ package daemon
 import (
 	"context"
 	"sync"
+
+	"github.com/WaffleHacks/mailer/providers"
 )
 
 // Daemon orchestrates processing and sending incoming messages
@@ -14,7 +16,7 @@ type Daemon struct {
 }
 
 // New spawns a new sender daemon to process all the incoming messages
-func New(workers int) *Daemon {
+func New(providers map[string]providers.Provider) *Daemon {
 	// Allow gracefully stopping the daemon
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
@@ -23,9 +25,9 @@ func New(workers int) *Daemon {
 	queue := make(chan Message)
 
 	// Spawn the workers
-	wg.Add(workers)
-	for i := 0; i < workers; i++ {
-		go worker(ctx, queue, &wg)
+	wg.Add(len(providers))
+	for id, provider := range providers {
+		go worker(ctx, id, provider, queue, &wg)
 	}
 
 	return &Daemon{

@@ -6,8 +6,9 @@ import (
 	"sync"
 
 	"github.com/k3a/html2text"
-	gonanoid "github.com/matoous/go-nanoid"
 	"go.uber.org/zap"
+
+	"github.com/WaffleHacks/mailer/providers"
 )
 
 type BodyType int32
@@ -28,8 +29,8 @@ type Message struct {
 }
 
 // worker processes and sends the incoming messages
-func worker(ctx context.Context, queue <-chan Message, wg *sync.WaitGroup) {
-	l := zap.L().Named("daemon:worker").With(zap.String("id", gonanoid.MustID(8)))
+func worker(ctx context.Context, id string, provider providers.Provider, queue <-chan Message, wg *sync.WaitGroup) {
+	l := zap.L().Named("daemon:worker").With(zap.String("provider", id))
 	l.Info("worker started")
 
 	for {
