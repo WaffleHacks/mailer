@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 
-	"github.com/WaffleHacks/mailer/daemon/providers"
+	"github.com/WaffleHacks/mailer/providers"
 )
 
 // Config contains all the runtime configuration information
