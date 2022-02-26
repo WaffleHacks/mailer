@@ -42,12 +42,12 @@ func worker(ctx context.Context, id string, provider providers.Provider, queue <
 			// Select batch or single sending
 			var err error
 			if len(message.To) == 1 {
-				err = provider.Send(ctx, message.To[0], message.From, message.Subject, plain, html, message.ReplyTo)
+				err = provider.Send(ctx, l, message.To[0], message.From, message.Subject, plain, html, message.ReplyTo)
 			} else if supportsBatching {
-				err = batchedProvider.SendBatch(ctx, message.To, message.From, message.Subject, plain, html, message.ReplyTo)
+				err = batchedProvider.SendBatch(ctx, l, message.To, message.From, message.Subject, plain, html, message.ReplyTo)
 			} else {
 				for _, to := range message.To {
-					err = provider.Send(ctx, to, message.From, message.Subject, plain, html, message.ReplyTo)
+					err = provider.Send(ctx, l, to, message.From, message.Subject, plain, html, message.ReplyTo)
 					if err != nil {
 						break
 					}

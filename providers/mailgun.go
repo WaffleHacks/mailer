@@ -9,13 +9,14 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mailgun/mailgun-go/v4"
+	"go.uber.org/zap"
 )
 
 type MailGun struct {
 	mg mailgun.Mailgun
 }
 
-func (m *MailGun) Send(ctx context.Context, to string, from string, subject string, body string, htmlBody, replyTo *string) error {
+func (m *MailGun) Send(ctx context.Context, l *zap.Logger, to string, from string, subject string, body string, htmlBody, replyTo *string) error {
 	msg := m.mg.NewMessage(from, subject, body, to)
 	if htmlBody != nil {
 		msg.SetHtml(*htmlBody)
@@ -23,10 +24,12 @@ func (m *MailGun) Send(ctx context.Context, to string, from string, subject stri
 	if replyTo != nil {
 		msg.SetReplyTo(*replyTo)
 	}
+	l.Debug("constructed message", zap.Bool("has-html", htmlBody != nil), zap.Bool("has-reply-to", replyTo != nil))
 
 	return backoff.Retry(func() error {
 		_, _, err := m.mg.Send(ctx, msg)
 		if err, ok := err.(*mailgun.UnexpectedResponseError); ok && err.Actual == http.StatusTooManyRequests {
+			l.Warn("rate limit encountered, backing off and retrying")
 			return err
 		} else if err != nil {
 			return backoff.Permanent(err)
@@ -36,7 +39,7 @@ func (m *MailGun) Send(ctx context.Context, to string, from string, subject stri
 	}, backoff.NewExponentialBackOff())
 }
 
-func (m *MailGun) SendBatch(ctx context.Context, to []string, from string, subject string, body string, htmlBody, replyTo *string) error {
+func (m *MailGun) SendBatch(ctx context.Context, l *zap.Logger, to []string, from string, subject string, body string, htmlBody, replyTo *string) error {
 	msg := m.mg.NewMessage(from, subject, body)
 	for _, address := range to {
 		if err := msg.AddRecipient(address); err != nil {
@@ -49,10 +52,12 @@ func (m *MailGun) SendBatch(ctx context.Context, to []string, from string, subje
 	if replyTo != nil {
 		msg.SetReplyTo(*replyTo)
 	}
+	l.Debug("constructed message", zap.Bool("has-html", htmlBody != nil), zap.Bool("has-reply-to", replyTo != nil), zap.Int("recipients", len(to)))
 
 	return backoff.Retry(func() error {
 		_, _, err := m.mg.Send(ctx, msg)
 		if err, ok := err.(*mailgun.UnexpectedResponseError); ok && err.Actual == http.StatusTooManyRequests {
+			l.Warn("rate limit encountered, backing off and retrying")
 			return err
 		} else if err != nil {
 			return backoff.Permanent(err)
