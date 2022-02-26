@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package proto;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/WaffleHacks/mailer/proto";
+
+enum BodyType {
+  BODY_TYPE_UNSPECIFIED = 0;
+  BODY_TYPE_PLAIN = 1;
+  BODY_TYPE_HTML = 2;
+}
+
+message SendRequest {
+  string to = 1;
+  string from = 2;
+  string subject = 3;
+  string body = 4;
+  BodyType type = 5;
+  string reply_to = 6;
+}
+
+message SendResponse {}
+
+message SendBatchRequest {
+  repeated string to = 1;
+  string from = 2;
+  string subject = 3;
+  string body = 4;
+  BodyType type = 5;
+  string reply_to = 6;
+}
+
+message SendBatchResponse {}
+
+service MailerService {
+  // Send a single email message to a recipient
+  rpc Send(SendRequest) returns (SendResponse) {
+    option (google.api.http) = {
+      post: "/send"
+      body: "*"
+    };
+  }
+  // Send a single message to multiple recipients
+  rpc SendBatch(SendBatchRequest) returns (SendBatchResponse) {
+    option (google.api.http) = {
+      post: "/send/batch"
+      body: "*"
+    };
+  }
+}

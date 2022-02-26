@@ -1,0 +1,10 @@
+version: v1
+lint:
+  ignore_only:
+    PACKAGE_DIRECTORY_MATCH:
+      - api.proto
+    PACKAGE_VERSION_SUFFIX:
+      - api.proto
+deps:
+  - buf.build/googleapis/googleapis
+  - buf.build/grpc-ecosystem/grpc-gateway
