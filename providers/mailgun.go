@@ -3,7 +3,6 @@ package providers
 import (
 	"context"
 	"fmt"
-	"net/mail"
 	"os"
 	"strings"
 
@@ -14,8 +13,8 @@ type MailGun struct {
 	mg mailgun.Mailgun
 }
 
-func (m *MailGun) Send(ctx context.Context, to mail.Address, from mail.Address, subject string, body string, htmlBody, replyTo *string) error {
-	msg := m.mg.NewMessage(from.String(), subject, body, to.String())
+func (m *MailGun) Send(ctx context.Context, to string, from string, subject string, body string, htmlBody, replyTo *string) error {
+	msg := m.mg.NewMessage(from, subject, body, to)
 	if htmlBody != nil {
 		msg.SetHtml(*htmlBody)
 	}
@@ -27,10 +26,10 @@ func (m *MailGun) Send(ctx context.Context, to mail.Address, from mail.Address, 
 	return err
 }
 
-func (m *MailGun) SendBatch(ctx context.Context, to []mail.Address, from mail.Address, subject string, body string, htmlBody, replyTo *string) error {
-	msg := m.mg.NewMessage(from.String(), subject, body)
+func (m *MailGun) SendBatch(ctx context.Context, to []string, from string, subject string, body string, htmlBody, replyTo *string) error {
+	msg := m.mg.NewMessage(from, subject, body)
 	for _, address := range to {
-		if err := msg.AddRecipient(address.String()); err != nil {
+		if err := msg.AddRecipient(address); err != nil {
 			return err
 		}
 	}
