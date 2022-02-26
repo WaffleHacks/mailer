@@ -43,6 +43,7 @@ func worker(ctx context.Context, queue <-chan Message, wg *sync.WaitGroup) {
 		case <-ctx.Done():
 			l.Info("worker exited")
 			wg.Done()
+			return
 		}
 	}
 }
