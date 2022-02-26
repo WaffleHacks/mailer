@@ -40,7 +40,7 @@ func main() {
 	}
 
 	// Start the gRPC server
-	server := rpc.New()
+	server := rpc.New(mailer.Queue)
 	go func() {
 		logger.Named("grpc").Info("listening and ready to handle requests", zap.String("address", config.GRPCAddress))
 		if err := server.Serve(listener); err != nil && err != grpc.ErrServerStopped {
