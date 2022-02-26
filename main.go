@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -37,4 +40,13 @@ func main() {
 			logger.Fatal("an error occurred while running the server", zap.Error(err))
 		}
 	}()
+
+	// Register signal handlers for shutdown
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	<-shutdown
+
+	server.GracefulStop()
+
+	logger.Info("shutdown complete. goodbye!")
 }
