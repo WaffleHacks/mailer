@@ -31,13 +31,15 @@ func worker(ctx context.Context, queue <-chan Message, wg *sync.WaitGroup) {
 	l := zap.L().Named("daemon:worker").With(zap.String("id", gonanoid.MustID(8)))
 	l.Info("worker started")
 
-	select {
-	case message := <-queue:
-		// TODO: actually send messages
-		fmt.Printf("%+v\n", message)
+	for {
+		select {
+		case message := <-queue:
+			// TODO: actually send messages
+			fmt.Printf("%+v\n", message)
 
-	case <-ctx.Done():
-		l.Info("worker exited")
-		wg.Done()
+		case <-ctx.Done():
+			l.Info("worker exited")
+			wg.Done()
+		}
 	}
 }
