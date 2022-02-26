@@ -3,9 +3,11 @@ package providers
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/mailgun/mailgun-go/v4"
 )
 
@@ -22,8 +24,16 @@ func (m *MailGun) Send(ctx context.Context, to string, from string, subject stri
 		msg.SetReplyTo(*replyTo)
 	}
 
-	_, _, err := m.mg.Send(ctx, msg)
-	return err
+	return backoff.Retry(func() error {
+		_, _, err := m.mg.Send(ctx, msg)
+		if err, ok := err.(*mailgun.UnexpectedResponseError); ok && err.Actual == http.StatusTooManyRequests {
+			return err
+		} else if err != nil {
+			return backoff.Permanent(err)
+		} else {
+			return nil
+		}
+	}, backoff.NewExponentialBackOff())
 }
 
 func (m *MailGun) SendBatch(ctx context.Context, to []string, from string, subject string, body string, htmlBody, replyTo *string) error {
@@ -40,8 +50,16 @@ func (m *MailGun) SendBatch(ctx context.Context, to []string, from string, subje
 		msg.SetReplyTo(*replyTo)
 	}
 
-	_, _, err := m.mg.Send(ctx, msg)
-	return err
+	return backoff.Retry(func() error {
+		_, _, err := m.mg.Send(ctx, msg)
+		if err, ok := err.(*mailgun.UnexpectedResponseError); ok && err.Actual == http.StatusTooManyRequests {
+			return err
+		} else if err != nil {
+			return backoff.Permanent(err)
+		} else {
+			return nil
+		}
+	}, backoff.NewExponentialBackOff())
 }
 
 // NewMailgun creates a new MailGun email provider
