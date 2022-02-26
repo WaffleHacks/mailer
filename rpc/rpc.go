@@ -81,15 +81,19 @@ func (m *mailerServer) process(logger *zap.Logger, in *mailerv1.SendBatchRequest
 			return status.New(codes.InvalidArgument, "invalid to email address format")
 		}
 	}
+	var replyTo *string
+	if len(in.ReplyTo) != 0 {
+		if _, err := mail.ParseAddress(in.ReplyTo); err != nil {
+			logger.Warn("invalid email address format", zap.String("reply-to", in.ReplyTo))
+			return status.New(codes.InvalidArgument, "invalid reply to email address format")
+		}
+		replyTo = &in.ReplyTo
+	}
 
 	// Set defaults
 	bodyType := in.Type
 	if bodyType == mailerv1.BodyType_BODY_TYPE_UNSPECIFIED {
 		bodyType = mailerv1.BodyType_BODY_TYPE_PLAIN
-	}
-	var replyTo *string
-	if len(in.ReplyTo) != 0 {
-		replyTo = &in.ReplyTo
 	}
 
 	// Enqueue the message for sending
