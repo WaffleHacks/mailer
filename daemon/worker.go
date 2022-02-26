@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/k3a/html2text"
@@ -33,13 +32,33 @@ func worker(ctx context.Context, id string, provider providers.Provider, queue <
 	l := zap.L().Named("daemon:worker").With(zap.String("provider", id))
 	l.Info("worker started")
 
+	batchedProvider, supportsBatching := provider.(providers.BatchedProvider)
+
 	for {
 		select {
 		case message := <-queue:
 			plain, html := makeBodies(message.Body, message.Type)
-			fmt.Println(plain, html)
 
-			// TODO: actually send messages
+			// Select batch or single sending
+			var err error
+			if len(message.To) == 1 {
+				err = provider.Send(ctx, message.To[0], message.From, message.Subject, plain, html, message.ReplyTo)
+			} else if supportsBatching {
+				err = batchedProvider.SendBatch(ctx, message.To, message.From, message.Subject, plain, html, message.ReplyTo)
+			} else {
+				for _, to := range message.To {
+					err = provider.Send(ctx, to, message.From, message.Subject, plain, html, message.ReplyTo)
+					if err != nil {
+						break
+					}
+				}
+			}
+
+			if err == nil {
+				l.Info("sent message(s)", zap.Int("count", len(message.To)))
+			} else {
+				l.Error("failed to send message(s)", zap.Error(err))
+			}
 
 		case <-ctx.Done():
 			l.Info("worker exited")
