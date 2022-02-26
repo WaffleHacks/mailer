@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"net"
 	"os"
 	"strconv"
@@ -8,6 +10,8 @@ import (
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
+
+	"github.com/WaffleHacks/mailer/daemon/providers"
 )
 
 // Config contains all the runtime configuration information
@@ -19,6 +23,8 @@ type Config struct {
 	Development bool
 
 	Workers int
+
+	Providers map[string]providers.Provider
 }
 
 // ReadConfig extracts all the configuration options from the environment variables
@@ -45,12 +51,37 @@ func ReadConfig() (*Config, error) {
 		return nil, err
 	}
 
+	// Register all the providers
+	enabledProviders := strings.Split(os.Getenv("MAILER_PROVIDERS"), ",")
+	configuredProviders := make(map[string]providers.Provider)
+	for _, rawId := range enabledProviders {
+		if len(rawId) == 0 {
+			continue
+		}
+		id := strings.TrimSpace(rawId)
+
+		// Create the provider
+		typeName := os.Getenv(fmt.Sprintf("MAILER_PROVIDER_%s_TYPE", strings.ToUpper(id)))
+		provider, err := providers.Get(id, typeName)
+		if err != nil {
+			return nil, err
+		} else if provider == nil {
+			return nil, fmt.Errorf("unknown provider type %q for %q", typeName, id)
+		}
+
+		configuredProviders[id] = provider
+	}
+	if len(configuredProviders) == 0 {
+		return nil, errors.New("at least 1 provider must be configured")
+	}
+
 	return &Config{
 		GRPCAddress: net.JoinHostPort(address, grpcPort),
 		HTTPAddress: net.JoinHostPort(address, httpPort),
 		LogLevel:    level,
 		Development: development,
 		Workers:     workers,
+		Providers:   configuredProviders,
 	}, nil
 }
 
