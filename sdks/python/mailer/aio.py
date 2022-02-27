@@ -1,8 +1,6 @@
 from aiohttp import ClientSession
-import json
-from typing import List, Optional
 
-from .base import Client, BodyType
+from .base import Client
 
 
 class AsyncClient(Client):
@@ -23,50 +21,8 @@ class AsyncClient(Client):
         """
         self.session.close()
 
-    async def send(
-        self,
-        to_email: str,
-        from_email: str,
-        subject: str,
-        body: str,
-        body_type: BodyType = BodyType.PLAIN,
-        reply_to: Optional[str] = None,
-    ):
-        data = json.dumps(
-            {
-                "to": to_email,
-                "from": from_email,
-                "subject": subject,
-                "body": body,
-                "type": body_type.value,
-                "replyTo": reply_to,
-            }
-        )
+    async def _dispatch(self, path: str, body: str):
         response = await self.session.post(
-            "/send", data=data, headers={"Content-Type": "application/json"}
-        )
-        print(await response.json())
-
-    async def send_batch(
-        self,
-        to_email: List[str],
-        from_email: str,
-        subject: str,
-        body: str,
-        body_type: BodyType = BodyType.PLAIN,
-        reply_to: Optional[str] = None,
-    ):
-        data = json.dumps(
-            {
-                "to": to_email,
-                "from": from_email,
-                "subject": subject,
-                "body": body,
-                "type": body_type.value,
-                "replyTo": reply_to,
-            }
-        )
-        response = await self.session.post(
-            "/send", data=data, headers={"Content-Type": "application/json"}
+            path, data=body, headers={"Content-Type": "application/json"}
         )
         print(await response.json())

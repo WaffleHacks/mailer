@@ -1,23 +1,27 @@
 from abc import ABCMeta, abstractmethod
 from enum import Enum
+import json
 from typing import List, Optional
 
 
 class BodyType(Enum):
-    PLAIN = 1
-    HTML = 2
+    PLAIN = "BODY_TYPE_PLAIN"
+    HTML = "BODY_TYPE_HTML"
 
 
 class Client(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass) -> bool:
-        has_send = hasattr(subclass, "send") and callable(subclass.send)
-        has_send_batch = hasattr(subclass, "send_batch") and callable(
-            subclass.send_batch
+        return (
+            hasattr(subclass, "_dispatch")
+            and callable(subclass.dispatch)
+            or NotImplementedError
         )
-        return has_send and has_send_batch
 
     @abstractmethod
+    def _dispatch(self, path: str, body: str):
+        raise NotImplementedError()
+
     def send(
         self,
         to_email: str,
@@ -27,9 +31,20 @@ class Client(metaclass=ABCMeta):
         body_type: BodyType = BodyType.PLAIN,
         reply_to: Optional[str] = None,
     ):
-        raise NotImplementedError()
+        await self._dispatch(
+            "/send",
+            json.dumps(
+                {
+                    "to": to_email,
+                    "from": from_email,
+                    "subject": subject,
+                    "body": body,
+                    "type": body_type.value,
+                    "reply_to": reply_to,
+                }
+            ),
+        )
 
-    @abstractmethod
     def send_batch(
         self,
         to_email: List[str],
@@ -39,4 +54,16 @@ class Client(metaclass=ABCMeta):
         body_type: BodyType = BodyType.PLAIN,
         reply_to: Optional[str] = None,
     ):
-        raise NotImplementedError()
+        await self._dispatch(
+            "/send/batch",
+            json.dumps(
+                {
+                    "to": to_email,
+                    "from": from_email,
+                    "subject": subject,
+                    "body": body,
+                    "type": body_type.value,
+                    "reply_to": reply_to,
+                }
+            ),
+        )
