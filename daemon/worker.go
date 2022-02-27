@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/k3a/html2text"
+	gonanoid "github.com/matoous/go-nanoid"
 	"go.uber.org/zap"
 
 	"github.com/WaffleHacks/mailer/providers"
@@ -28,26 +29,26 @@ type Message struct {
 }
 
 // worker processes and sends the incoming messages
-func worker(ctx context.Context, id string, provider providers.Provider, queue <-chan Message, wg *sync.WaitGroup) {
-	l := zap.L().Named("daemon:worker").With(zap.String("provider", id))
+func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
+	l := zap.L().Named("daemon:worker").With(zap.String("provider", matcher.id), zap.String("id", gonanoid.MustID(8)))
 	l.Info("worker started")
 
-	batchedProvider, supportsBatching := provider.(providers.BatchedProvider)
+	batchedProvider, supportsBatching := matcher.provider.(providers.BatchedProvider)
 
 	for {
 		select {
-		case message := <-queue:
+		case message := <-matcher.queue:
 			plain, html := makeBodies(message.Body, message.Type)
 
 			// Select batch or single sending
 			var err error
 			if len(message.To) == 1 {
-				err = provider.Send(ctx, l, message.To[0], message.From, message.Subject, plain, html, message.ReplyTo)
+				err = matcher.provider.Send(ctx, l, message.To[0], message.From, message.Subject, plain, html, message.ReplyTo)
 			} else if supportsBatching {
 				err = batchedProvider.SendBatch(ctx, l, message.To, message.From, message.Subject, plain, html, message.ReplyTo)
 			} else {
 				for _, to := range message.To {
-					err = provider.Send(ctx, l, to, message.From, message.Subject, plain, html, message.ReplyTo)
+					err = matcher.provider.Send(ctx, l, to, message.From, message.Subject, plain, html, message.ReplyTo)
 					if err != nil {
 						break
 					}

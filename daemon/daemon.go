@@ -3,20 +3,19 @@ package daemon
 import (
 	"context"
 	"sync"
-
-	"github.com/WaffleHacks/mailer/providers"
 )
 
 // Daemon orchestrates processing and sending incoming messages
 type Daemon struct {
 	Queue chan Message
 
-	stop context.CancelFunc
-	wg   *sync.WaitGroup
+	matchers []*Matcher
+	stop     context.CancelFunc
+	wg       *sync.WaitGroup
 }
 
 // New spawns a new sender daemon to process all the incoming messages
-func New(providers map[string]providers.Provider) *Daemon {
+func New(matchers []*Matcher) *Daemon {
 	// Allow gracefully stopping the daemon
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
@@ -25,15 +24,39 @@ func New(providers map[string]providers.Provider) *Daemon {
 	queue := make(chan Message)
 
 	// Spawn the workers
-	wg.Add(len(providers))
-	for id, provider := range providers {
-		go worker(ctx, id, provider, queue, &wg)
+	for _, matcher := range matchers {
+		wg.Add(matcher.workers)
+		for i := 0; i < matcher.workers; i++ {
+			go worker(ctx, matcher, &wg)
+		}
 	}
 
-	return &Daemon{
-		Queue: queue,
-		stop:  cancel,
-		wg:    &wg,
+	d := &Daemon{
+		matchers: matchers,
+		Queue:    queue,
+		stop:     cancel,
+		wg:       &wg,
+	}
+	go d.dispatcher(ctx)
+
+	return d
+}
+
+// dispatcher routes messages to the different providers
+func (d *Daemon) dispatcher(ctx context.Context) {
+	d.wg.Add(1)
+
+	for {
+		select {
+		case msg := <-d.Queue:
+			for _, matcher := range d.matchers {
+				matcher.Enqueue(msg)
+			}
+
+		case <-ctx.Done():
+			d.wg.Done()
+			return
+		}
 	}
 }
 

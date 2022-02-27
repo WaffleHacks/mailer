@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 
+	"github.com/WaffleHacks/mailer/daemon"
 	"github.com/WaffleHacks/mailer/providers"
 )
 
@@ -23,7 +25,7 @@ type Config struct {
 
 	Workers int
 
-	Providers map[string]providers.Provider
+	Providers []*daemon.Matcher
 }
 
 // ReadConfig extracts all the configuration options from the environment variables
@@ -47,15 +49,16 @@ func ReadConfig() (*Config, error) {
 
 	// Register all the providers
 	enabledProviders := strings.Split(os.Getenv("MAILER_PROVIDERS"), ",")
-	configuredProviders := make(map[string]providers.Provider)
+	var configuredProviders []*daemon.Matcher
 	for _, rawId := range enabledProviders {
 		if len(rawId) == 0 {
 			continue
 		}
 		id := strings.TrimSpace(rawId)
+		envId := strings.ToUpper(id)
 
 		// Create the provider
-		typeName := os.Getenv(fmt.Sprintf("MAILER_PROVIDER_%s_TYPE", strings.ToUpper(id)))
+		typeName := os.Getenv(fmt.Sprintf("MAILER_PROVIDER_%s_TYPE", envId))
 		provider, err := providers.Get(id, typeName)
 		if err != nil {
 			return nil, err
@@ -63,7 +66,20 @@ func ReadConfig() (*Config, error) {
 			return nil, fmt.Errorf("unknown provider type %q for %q", typeName, id)
 		}
 
-		configuredProviders[id] = provider
+		// Get the number of workers for the provider
+		workers, err := strconv.Atoi(getEnvOrDefault(fmt.Sprintf("MAILER_PROVIDER_%s_WORKERS", envId), "1"))
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse number of workers for provider %s: %v", id, err)
+		}
+
+		// Determine which providers should match
+		pattern := getEnvOrDefault(fmt.Sprintf("MAILER_PROVIDER_%s_MATCHES", envId), "*")
+		matcher, err := daemon.NewMatcher(id, workers, provider, pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid patter for matching provider %q: %v", id, err)
+		}
+
+		configuredProviders = append(configuredProviders, matcher)
 	}
 	if len(configuredProviders) == 0 {
 		return nil, errors.New("at least 1 provider must be configured")
