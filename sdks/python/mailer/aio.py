@@ -1,9 +1,11 @@
 from aiohttp import ClientSession
+import json
+from typing import List, Optional
 
-from .base import Client
+from .shared import BodyType, InvalidArgumentException
 
 
-class AsyncClient(Client):
+class AsyncClient(object):
     """
     An async mailer client for sending messages
     """
@@ -25,4 +27,73 @@ class AsyncClient(Client):
         response = await self.session.post(
             path, data=body, headers={"Content-Type": "application/json"}
         )
-        print(await response.json())
+
+        if response.status == 400:
+            body = await response.json()
+            raise InvalidArgumentException(body["message"])
+
+    async def send(
+        self,
+        to_email: str,
+        from_email: str,
+        subject: str,
+        body: str,
+        body_type: BodyType = BodyType.PLAIN,
+        reply_to: Optional[str] = None,
+    ):
+        """
+        Send a single email
+        :param to_email: the address of the recipient
+        :param from_email: the address of the sender in RFC 5322
+        :param subject: the email subject
+        :param body: the message body
+        :param body_type: the content type of the body
+        :param reply_to: an optional email to reply to
+        """
+
+        await self._dispatch(
+            "/send",
+            json.dumps(
+                {
+                    "to": to_email,
+                    "from": from_email,
+                    "subject": subject,
+                    "body": body,
+                    "type": body_type.value,
+                    "reply_to": reply_to,
+                }
+            ),
+        )
+
+    async def send_batch(
+        self,
+        to_email: List[str],
+        from_email: str,
+        subject: str,
+        body: str,
+        body_type: BodyType = BodyType.PLAIN,
+        reply_to: Optional[str] = None,
+    ):
+        """
+        Send an email to many recipients
+        :param to_email: the addresses of the recipients
+        :param from_email: the address of the sender in RFC 5322
+        :param subject: the email subject
+        :param body: the message body
+        :param body_type: the content type of the body
+        :param reply_to: an optional email to reply to
+        """
+
+        await self._dispatch(
+            "/send/batch",
+            json.dumps(
+                {
+                    "to": to_email,
+                    "from": from_email,
+                    "subject": subject,
+                    "body": body,
+                    "type": body_type.value,
+                    "reply_to": reply_to,
+                }
+            ),
+        )

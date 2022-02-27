@@ -1,5 +1,5 @@
 from .aio import AsyncClient
-from .base import BodyType
+from .shared import BodyType, InvalidArgumentException
 
 
 __version__ = "0.1.0"
