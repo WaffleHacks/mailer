@@ -6,7 +6,7 @@ import (
 
 type creator func(id string) (Provider, error)
 
-var registry = map[string]creator{"mailgun": NewMailgun}
+var registry = map[string]creator{"mailgun": NewMailgun, "ses": NewSES}
 
 // Get retrieves and creates the provider
 func Get(id, typeName string) (Provider, error) {
