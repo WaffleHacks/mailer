@@ -30,7 +30,7 @@ type Config struct {
 
 // ReadConfig extracts all the configuration options from the environment variables
 func ReadConfig() (*Config, error) {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
 
