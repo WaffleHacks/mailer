@@ -15,7 +15,9 @@ class AsyncClient(object):
         if not base_url.endswith("/"):
             base_url += "/"
 
-        self.session = ClientSession(base_url)
+        self.session = ClientSession(
+            base_url, headers={"Content-Type": "application/json"}
+        )
 
     def close(self):
         """
@@ -24,9 +26,7 @@ class AsyncClient(object):
         self.session.close()
 
     async def _dispatch(self, path: str, body: str):
-        response = await self.session.post(
-            path, data=body, headers={"Content-Type": "application/json"}
-        )
+        response = await self.session.post(path, data=body)
 
         if response.status == 400:
             body = await response.json()
