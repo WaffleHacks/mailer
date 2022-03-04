@@ -28,7 +28,8 @@ func main() {
 	// Initialize sentry if present
 	if config.SentryDsn != nil {
 		options := sentry.ClientOptions{
-			Dsn: config.SentryDsn.String(),
+			Dsn:              config.SentryDsn.String(),
+			TracesSampleRate: 0.5,
 		}
 		if config.Development {
 			options.Environment = "development"
