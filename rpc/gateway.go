@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -36,11 +37,17 @@ func NewGateway(grpcAddress, httpAddress string) (*http.Server, error) {
 		return nil, err
 	}
 
+	// Create the sentry handler
+	sentry := sentryhttp.New(sentryhttp.Options{
+		Repanic: true, // Re-panic to be handled by chi
+	})
+
 	// Create a wrapping mux
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(logging.Request(zap.L().Named("http")))
+	r.Use(sentry.Handle)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Heartbeat("/ping"))
 	r.Handle("/docs/*", documentation)

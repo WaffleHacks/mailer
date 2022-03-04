@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 
@@ -20,6 +21,7 @@ type Config struct {
 	GRPCAddress string
 	HTTPAddress string
 
+	SentryDsn   *sentry.Dsn
 	LogLevel    zap.AtomicLevel
 	Development bool
 
@@ -46,6 +48,15 @@ func ReadConfig() (*Config, error) {
 
 	rawDevelopment := strings.ToLower(getEnvOrDefault("MAILER_DEVELOPMENT", "no"))
 	development := rawDevelopment == "y" || rawDevelopment == "yes" || rawDevelopment == "t" || rawDevelopment == "true"
+
+	var dsn *sentry.Dsn
+	if rawDsn := os.Getenv("MAILER_SENTRY_DSN"); len(rawDsn) != 0 {
+		var err error
+		dsn, err = sentry.NewDsn(rawDsn)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	// Register all the providers
 	enabledProviders := strings.Split(os.Getenv("MAILER_PROVIDERS"), ",")
@@ -88,6 +99,7 @@ func ReadConfig() (*Config, error) {
 	return &Config{
 		GRPCAddress: net.JoinHostPort(address, grpcPort),
 		HTTPAddress: net.JoinHostPort(address, httpPort),
+		SentryDsn:   dsn,
 		LogLevel:    level,
 		Development: development,
 		Providers:   configuredProviders,
