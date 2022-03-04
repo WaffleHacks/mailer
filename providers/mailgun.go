@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/getsentry/sentry-go"
 	"github.com/mailgun/mailgun-go/v4"
 	"go.uber.org/zap"
 
@@ -19,6 +20,9 @@ type MailGun struct {
 }
 
 func (m *MailGun) Send(ctx context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+	span := sentry.TransactionFromContext(ctx).StartChild("send")
+	defer span.Finish()
+
 	msg := m.mg.NewMessage(from, subject, body, to)
 	if htmlBody != nil {
 		msg.SetHtml(*htmlBody)
@@ -29,7 +33,7 @@ func (m *MailGun) Send(ctx context.Context, l *logging.Logger, to, from, subject
 	l.Debug("constructed message", zap.Bool("has-html", htmlBody != nil), zap.Bool("has-reply-to", replyTo != nil))
 
 	return backoff.Retry(func() error {
-		_, _, err := m.mg.Send(ctx, msg)
+		_, _, err := m.mg.Send(span.Context(), msg)
 		if err, ok := err.(*mailgun.UnexpectedResponseError); ok && err.Actual == http.StatusTooManyRequests {
 			l.Warn("rate limit encountered, backing off and retrying")
 			return err
@@ -42,6 +46,9 @@ func (m *MailGun) Send(ctx context.Context, l *logging.Logger, to, from, subject
 }
 
 func (m *MailGun) SendBatch(ctx context.Context, l *logging.Logger, to []string, from, subject, body string, htmlBody, replyTo *string) error {
+	span := sentry.TransactionFromContext(ctx).StartChild("send-batch")
+	defer span.Finish()
+
 	msg := m.mg.NewMessage(from, subject, body)
 	for _, address := range to {
 		if err := msg.AddRecipient(address); err != nil {
@@ -57,7 +64,7 @@ func (m *MailGun) SendBatch(ctx context.Context, l *logging.Logger, to []string,
 	l.Debug("constructed message", zap.Bool("has-html", htmlBody != nil), zap.Bool("has-reply-to", replyTo != nil), zap.Int("recipients", len(to)))
 
 	return backoff.Retry(func() error {
-		_, _, err := m.mg.Send(ctx, msg)
+		_, _, err := m.mg.Send(span.Context(), msg)
 		if err, ok := err.(*mailgun.UnexpectedResponseError); ok && err.Actual == http.StatusTooManyRequests {
 			l.Warn("rate limit encountered, backing off and retrying")
 			return err

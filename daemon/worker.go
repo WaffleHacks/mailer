@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/k3a/html2text"
 	gonanoid "github.com/matoous/go-nanoid"
 	"go.uber.org/zap"
@@ -31,7 +32,8 @@ type Message struct {
 
 // worker processes and sends the incoming messages
 func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
-	l := logging.L().Named("daemon:worker").With(zap.String("provider", matcher.id), zap.String("id", gonanoid.MustID(8)))
+	workerId := gonanoid.MustID(8)
+	l := logging.L().Named("daemon:worker").With(zap.String("provider", matcher.id), zap.String("id", workerId))
 	l.Info("worker started")
 
 	batchedProvider, supportsBatching := matcher.provider.(providers.BatchedProvider)
@@ -39,17 +41,21 @@ func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
 	for {
 		select {
 		case message := <-matcher.queue:
+			span := sentry.StartSpan(ctx, "message")
+			span.SetTag("provider", matcher.id)
+			span.SetTag("worker", workerId)
+
 			plain, html := makeBodies(message.Body, message.Type)
 
 			// Select batch or single sending
 			var err error
 			if len(message.To) == 1 {
-				err = matcher.provider.Send(ctx, l, message.To[0], message.From, message.Subject, plain, html, message.ReplyTo)
+				err = matcher.provider.Send(span.Context(), l, message.To[0], message.From, message.Subject, plain, html, message.ReplyTo)
 			} else if supportsBatching {
-				err = batchedProvider.SendBatch(ctx, l, message.To, message.From, message.Subject, plain, html, message.ReplyTo)
+				err = batchedProvider.SendBatch(span.Context(), l, message.To, message.From, message.Subject, plain, html, message.ReplyTo)
 			} else {
 				for _, to := range message.To {
-					err = matcher.provider.Send(ctx, l, to, message.From, message.Subject, plain, html, message.ReplyTo)
+					err = matcher.provider.Send(span.Context(), l, to, message.From, message.Subject, plain, html, message.ReplyTo)
 					if err != nil {
 						break
 					}
@@ -61,6 +67,7 @@ func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
 			} else {
 				l.Error("failed to send message(s)", zap.Error(err))
 			}
+			span.Finish()
 
 		case <-ctx.Done():
 			l.Info("worker exited")
