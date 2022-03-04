@@ -10,13 +10,15 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mailgun/mailgun-go/v4"
 	"go.uber.org/zap"
+
+	"github.com/WaffleHacks/mailer/logging"
 )
 
 type MailGun struct {
 	mg mailgun.Mailgun
 }
 
-func (m *MailGun) Send(ctx context.Context, l *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+func (m *MailGun) Send(ctx context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	msg := m.mg.NewMessage(from, subject, body, to)
 	if htmlBody != nil {
 		msg.SetHtml(*htmlBody)
@@ -39,7 +41,7 @@ func (m *MailGun) Send(ctx context.Context, l *zap.Logger, to, from, subject, bo
 	}, backoff.NewExponentialBackOff())
 }
 
-func (m *MailGun) SendBatch(ctx context.Context, l *zap.Logger, to []string, from, subject, body string, htmlBody, replyTo *string) error {
+func (m *MailGun) SendBatch(ctx context.Context, l *logging.Logger, to []string, from, subject, body string, htmlBody, replyTo *string) error {
 	msg := m.mg.NewMessage(from, subject, body)
 	for _, address := range to {
 		if err := msg.AddRecipient(address); err != nil {

@@ -11,7 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
-	"go.uber.org/zap"
+
+	"github.com/WaffleHacks/mailer/logging"
 )
 
 func newContent(data string) *types.Content {
@@ -25,7 +26,7 @@ type SES struct {
 	client *sesv2.Client
 }
 
-func (s *SES) Send(ctx context.Context, l *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+func (s *SES) Send(ctx context.Context, _ *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	input := &sesv2.SendEmailInput{
 		Content: &types.EmailContent{
 			Simple: &types.Message{

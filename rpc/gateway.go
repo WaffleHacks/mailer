@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -46,7 +45,7 @@ func NewGateway(grpcAddress, httpAddress string) (*http.Server, error) {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(logging.Request(zap.L().Named("http")))
+	r.Use(logging.Request(logging.L().Named("http")))
 	r.Use(sentry.Handle)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Heartbeat("/ping"))

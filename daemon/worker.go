@@ -8,6 +8,7 @@ import (
 	gonanoid "github.com/matoous/go-nanoid"
 	"go.uber.org/zap"
 
+	"github.com/WaffleHacks/mailer/logging"
 	"github.com/WaffleHacks/mailer/providers"
 )
 
@@ -30,7 +31,7 @@ type Message struct {
 
 // worker processes and sends the incoming messages
 func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
-	l := zap.L().Named("daemon:worker").With(zap.String("provider", matcher.id), zap.String("id", gonanoid.MustID(8)))
+	l := logging.L().Named("daemon:worker").With(zap.String("provider", matcher.id), zap.String("id", gonanoid.MustID(8)))
 	l.Info("worker started")
 
 	batchedProvider, supportsBatching := matcher.provider.(providers.BatchedProvider)

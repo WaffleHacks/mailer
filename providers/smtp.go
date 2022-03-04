@@ -7,8 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"go.uber.org/zap"
 	"gopkg.in/gomail.v2"
+
+	"github.com/WaffleHacks/mailer/logging"
 )
 
 type SMTP struct {
@@ -17,7 +18,7 @@ type SMTP struct {
 	open   bool
 }
 
-func (s *SMTP) Send(_ context.Context, l *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+func (s *SMTP) Send(_ context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	// Reconnect if necessary
 	if !s.open {
 		sender, err := s.dialer.Dial()

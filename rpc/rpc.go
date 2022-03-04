@@ -26,7 +26,7 @@ func New(queue chan daemon.Message) *grpc.Server {
 }
 
 func (m *mailerServer) Send(_ context.Context, in *mailerv1.SendRequest) (*mailerv1.SendResponse, error) {
-	s := logging.GRPCRequest("Send", func(l *zap.Logger) *status.Status {
+	s := logging.GRPCRequest("Send", func(l *logging.Logger) *status.Status {
 		return m.process(l, &mailerv1.SendBatchRequest{
 			To:      []string{in.To},
 			From:    in.From,
@@ -44,7 +44,7 @@ func (m *mailerServer) Send(_ context.Context, in *mailerv1.SendRequest) (*maile
 }
 
 func (m *mailerServer) SendBatch(_ context.Context, in *mailerv1.SendBatchRequest) (*mailerv1.SendBatchResponse, error) {
-	s := logging.GRPCRequest("SendBatch", func(l *zap.Logger) *status.Status {
+	s := logging.GRPCRequest("SendBatch", func(l *logging.Logger) *status.Status {
 		return m.process(l, in)
 	})
 
@@ -55,7 +55,7 @@ func (m *mailerServer) SendBatch(_ context.Context, in *mailerv1.SendBatchReques
 }
 
 // Do the work of processing the messages
-func (m *mailerServer) process(logger *zap.Logger, in *mailerv1.SendBatchRequest) *status.Status {
+func (m *mailerServer) process(logger *logging.Logger, in *mailerv1.SendBatchRequest) *status.Status {
 	// Ensure all inputs exist
 	if len(in.To) == 0 {
 		return status.New(codes.InvalidArgument, "to is required")

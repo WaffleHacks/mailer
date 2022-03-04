@@ -9,8 +9,8 @@ import (
 )
 
 // GRPCRequest acts as middleware to add logging to a gRPC request
-func GRPCRequest(method string, action func(l *zap.Logger) *status.Status) *status.Status {
-	l := zap.L().Named("grpc").With(zap.String("method", method), zap.String("id", gonanoid.MustID(8)))
+func GRPCRequest(method string, action func(l *Logger) *status.Status) *status.Status {
+	l := L().Named("grpc").With(zap.String("method", method), zap.String("id", gonanoid.MustID(8)))
 	l.Info("started processing request")
 	start := time.Now()
 
