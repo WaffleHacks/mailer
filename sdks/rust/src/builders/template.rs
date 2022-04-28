@@ -72,6 +72,6 @@ impl<'s> SendTemplateBuilder<'s> {
             self.reply_to,
         );
 
-        self.client.publish("/send/template", req).await
+        self.client.dispatch("/send/template", req).await
     }
 }
