@@ -2,11 +2,14 @@ use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client as HttpClient, StatusCode, Url,
 };
+use serde::Serialize;
 use std::time::Duration;
 
 mod error;
+mod template;
 mod types;
 
+use crate::template::SendTemplateBuilder;
 pub use error::Error;
 use error::Result;
 pub use types::BodyType;
@@ -48,6 +51,20 @@ impl Client {
                 Err(Error::Unknown(body.message))
             }
         }
+    }
+
+    pub(crate) async fn publish<T>(&self, path: &str, req: Request<'_, T>) -> Result<()>
+    where
+        T: Serialize,
+    {
+        let resp = self
+            .client
+            .post(self.base_url.join(path).unwrap())
+            .json(&req)
+            .send()
+            .await?;
+
+        Self::handle_response(resp).await
     }
 
     /// Send a single email
@@ -114,5 +131,15 @@ impl Client {
             .await?;
 
         Self::handle_response(resp).await
+    }
+
+    /// Send a templated email to many recipients
+    pub async fn send_template<'s>(
+        &'s self,
+        from: &'s str,
+        subject: &'s str,
+        body: &'s str,
+    ) -> SendTemplateBuilder<'s> {
+        SendTemplateBuilder::new(&self, from, subject, body)
     }
 }

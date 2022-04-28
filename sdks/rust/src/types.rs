@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize)]
 pub enum BodyType {
@@ -34,6 +35,21 @@ impl<'r, T> Request<'r, T> {
             body,
             body_type: body_type.unwrap_or(BodyType::Plain),
             reply_to,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub(crate) struct TemplateContext<'c> {
+    key: Vec<&'c str>,
+    value: Vec<&'c str>,
+}
+
+impl<'c> From<HashMap<&'c str, &'c str>> for TemplateContext<'c> {
+    fn from(h: HashMap<&'c str, &'c str>) -> Self {
+        TemplateContext {
+            key: h.keys().copied().collect(),
+            value: h.values().copied().collect(),
         }
     }
 }
