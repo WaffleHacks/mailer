@@ -2,11 +2,14 @@ use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client as HttpClient, StatusCode, Url,
 };
+use serde::Serialize;
 use std::time::Duration;
 
+mod builders;
 mod error;
 mod types;
 
+use builders::*;
 pub use error::Error;
 use error::Result;
 pub use types::BodyType;
@@ -36,7 +39,18 @@ impl Client {
         Client { client, base_url }
     }
 
-    async fn handle_response(resp: reqwest::Response) -> Result<()> {
+    /// Send a request to the server
+    pub(crate) async fn dispatch<T>(&self, path: &str, req: Request<'_, T>) -> Result<()>
+    where
+        T: Serialize,
+    {
+        let resp = self
+            .client
+            .post(self.base_url.join(path).unwrap())
+            .json(&req)
+            .send()
+            .await?;
+
         let status = resp.status();
         if status == StatusCode::OK {
             Ok(())
@@ -51,68 +65,33 @@ impl Client {
     }
 
     /// Send a single email
-    pub async fn send<T, F, S, B>(
-        &self,
-        to: T,
-        from: F,
-        subject: S,
-        body: B,
-        body_type: Option<BodyType>,
-        reply_to: Option<&str>,
-    ) -> Result<()>
-    where
-        T: AsRef<str>,
-        F: AsRef<str>,
-        S: AsRef<str>,
-        B: AsRef<str>,
-    {
-        let resp = self
-            .client
-            .post(self.base_url.join("/send").unwrap())
-            .json(&Request::new(
-                to.as_ref(),
-                from.as_ref(),
-                subject.as_ref(),
-                body.as_ref(),
-                body_type,
-                reply_to,
-            ))
-            .send()
-            .await?;
-
-        Self::handle_response(resp).await
+    pub async fn send<'s>(
+        &'s self,
+        to: &'s str,
+        from: &'s str,
+        subject: &'s str,
+        body: &'s str,
+    ) -> SendBuilder<'s> {
+        SendBuilder::new(&self, to, from, subject, body)
     }
 
     /// Send an email to many recipients
-    pub async fn send_batch<'s, T, F, S, B>(
-        &self,
-        to: T,
-        from: F,
-        subject: S,
-        body: B,
-        body_type: Option<BodyType>,
-        reply_to: Option<&str>,
-    ) -> Result<()>
-    where
-        T: AsRef<[&'s str]>,
-        F: AsRef<str>,
-        S: AsRef<str>,
-        B: AsRef<str>,
-    {
-        let resp = self
-            .client
-            .post(self.base_url.join("/send/batch").unwrap())
-            .json(&Request::new(
-                to.as_ref(),
-                from.as_ref(),
-                subject.as_ref(),
-                body.as_ref(),
-                body_type,
-                reply_to,
-            ))
-            .send()
-            .await?;
+    pub async fn send_batch<'s>(
+        &'s self,
+        from: &'s str,
+        subject: &'s str,
+        body: &'s str,
+    ) -> SendBatchBuilder<'s> {
+        SendBatchBuilder::new(&self, from, subject, body)
+    }
 
-        Self::handle_response(resp).await
+    /// Send a templated email to many recipients
+    pub async fn send_template<'s>(
+        &'s self,
+        from: &'s str,
+        subject: &'s str,
+        body: &'s str,
+    ) -> SendTemplateBuilder<'s> {
+        SendTemplateBuilder::new(&self, from, subject, body)
     }
 }

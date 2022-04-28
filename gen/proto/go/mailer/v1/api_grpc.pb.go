@@ -22,6 +22,8 @@ type MailerServiceClient interface {
 	Send(ctx context.Context, in *SendRequest, opts ...grpc.CallOption) (*SendResponse, error)
 	// Send a single message to multiple recipients
 	SendBatch(ctx context.Context, in *SendBatchRequest, opts ...grpc.CallOption) (*SendBatchResponse, error)
+	// Send a templated message to multiple recipients
+	SendTemplate(ctx context.Context, in *SendTemplateRequest, opts ...grpc.CallOption) (*SendTemplateResponse, error)
 }
 
 type mailerServiceClient struct {
@@ -50,6 +52,15 @@ func (c *mailerServiceClient) SendBatch(ctx context.Context, in *SendBatchReques
 	return out, nil
 }
 
+func (c *mailerServiceClient) SendTemplate(ctx context.Context, in *SendTemplateRequest, opts ...grpc.CallOption) (*SendTemplateResponse, error) {
+	out := new(SendTemplateResponse)
+	err := c.cc.Invoke(ctx, "/mailer.v1.MailerService/SendTemplate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MailerServiceServer is the server API for MailerService service.
 // All implementations should embed UnimplementedMailerServiceServer
 // for forward compatibility
@@ -58,6 +69,8 @@ type MailerServiceServer interface {
 	Send(context.Context, *SendRequest) (*SendResponse, error)
 	// Send a single message to multiple recipients
 	SendBatch(context.Context, *SendBatchRequest) (*SendBatchResponse, error)
+	// Send a templated message to multiple recipients
+	SendTemplate(context.Context, *SendTemplateRequest) (*SendTemplateResponse, error)
 }
 
 // UnimplementedMailerServiceServer should be embedded to have forward compatible implementations.
@@ -69,6 +82,9 @@ func (UnimplementedMailerServiceServer) Send(context.Context, *SendRequest) (*Se
 }
 func (UnimplementedMailerServiceServer) SendBatch(context.Context, *SendBatchRequest) (*SendBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendBatch not implemented")
+}
+func (UnimplementedMailerServiceServer) SendTemplate(context.Context, *SendTemplateRequest) (*SendTemplateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendTemplate not implemented")
 }
 
 // UnsafeMailerServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -118,6 +134,24 @@ func _MailerService_SendBatch_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MailerService_SendTemplate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendTemplateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MailerServiceServer).SendTemplate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mailer.v1.MailerService/SendTemplate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MailerServiceServer).SendTemplate(ctx, req.(*SendTemplateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MailerService_ServiceDesc is the grpc.ServiceDesc for MailerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -132,6 +166,10 @@ var MailerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendBatch",
 			Handler:    _MailerService_SendBatch_Handler,
+		},
+		{
+			MethodName: "SendTemplate",
+			Handler:    _MailerService_SendTemplate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

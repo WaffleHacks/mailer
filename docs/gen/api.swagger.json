@@ -87,6 +87,40 @@
           "MailerService"
         ]
       }
+    },
+    "/send/template": {
+      "post": {
+        "summary": "SendTemplate",
+        "description": "Send a templated message to multiple recipients",
+        "operationId": "MailerService_SendTemplate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SendTemplateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SendTemplateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MailerService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -226,6 +260,88 @@
     },
     "v1SendResponse": {
       "type": "object"
+    },
+    "v1SendTemplateRequest": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1TemplateContext"
+          },
+          "description": "A list of the recipient email addresses with their associated context",
+          "required": [
+            "to"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "description": "The email address of the sender in RFC 5322 format",
+          "required": [
+            "from"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject line of the message",
+          "required": [
+            "subject"
+          ]
+        },
+        "body": {
+          "type": "string",
+          "description": "The main content of the message",
+          "required": [
+            "body"
+          ]
+        },
+        "type": {
+          "$ref": "#/definitions/v1BodyType",
+          "description": "The content type of the message, either HTML or plaintext"
+        },
+        "replyTo": {
+          "type": "string",
+          "description": "The address for the Reply-To header"
+        }
+      },
+      "required": [
+        "to",
+        "from",
+        "subject",
+        "body"
+      ]
+    },
+    "v1SendTemplateResponse": {
+      "type": "object"
+    },
+    "v1TemplateContext": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The keys for the context. Must be the same length as `value`.",
+          "required": [
+            "key"
+          ]
+        },
+        "value": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The values for the context keys. Must be the same length as `key`.",
+          "required": [
+            "value"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ]
     }
   }
 }

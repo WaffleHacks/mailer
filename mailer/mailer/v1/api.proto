@@ -81,6 +81,47 @@ message SendBatchRequest {
 
 message SendBatchResponse {}
 
+message TemplateContext {
+  repeated string key = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "The keys for the context. Must be the same length as `value`."}
+  ];
+  repeated string value = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "The values for the context keys. Must be the same length as `key`."}
+  ];
+}
+
+
+message SendTemplateRequest {
+  map<string, TemplateContext> to = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "A list of the recipient email addresses with their associated context"}
+  ];
+  string from = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "The email address of the sender in RFC 5322 format"}
+  ];
+  string subject = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "The subject line of the message"}
+  ];
+  string body = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "The main content of the message"}
+  ];
+  BodyType type = 5 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "The content type of the message, either HTML or plaintext"}
+  ];
+  string reply_to = 6 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "The address for the Reply-To header"}
+  ];
+}
+
+message SendTemplateResponse {}
+
 service MailerService {
   // Send a single email message to a recipient
   rpc Send(SendRequest) returns (SendResponse) {
@@ -102,6 +143,17 @@ service MailerService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "SendBatch";
       description: "Send a single message to multiple recipients";
+    };
+  }
+  // Send a templated message to multiple recipients
+  rpc SendTemplate(SendTemplateRequest) returns (SendTemplateResponse) {
+    option (google.api.http) = {
+      post: "/send/template";
+      body: "*";
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "SendTemplate";
+      description: "Send a templated message to multiple recipients";
     };
   }
 }

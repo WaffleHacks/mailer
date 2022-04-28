@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mailer"
-version = "0.1.0"
+version = "0.2.0"
 description = "The Python SDK for the WaffleHacks mailer"
 authors = ["Alex Krantz <alex@krantz.dev>"]
 
