@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/mail"
 
+	"github.com/WaffleHacks/mailer/template"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -52,6 +53,55 @@ func (m *mailerServer) SendBatch(_ context.Context, in *mailerv1.SendBatchReques
 		return nil, s.Err()
 	}
 	return &mailerv1.SendBatchResponse{}, nil
+}
+
+func (m *mailerServer) SendTemplate(_ context.Context, in *mailerv1.SendTemplateRequest) (*mailerv1.SendTemplateResponse, error) {
+	s := logging.GRPCRequest("SendTemplate", func(l *logging.Logger) *status.Status {
+		// Create the template
+		tmpl, err := template.New(in.Body)
+		if err != nil {
+			return status.New(codes.InvalidArgument, err.Error())
+		}
+
+		isHtml := false
+		if in.Type == mailerv1.BodyType_BODY_TYPE_HTML {
+			isHtml = true
+		}
+
+		// Template each message body
+		for email, rawMap := range in.To {
+			ctx := make(map[string]string)
+
+			// Populate the context
+			if rawMap != nil {
+				// Ensure it is valid
+				if len(rawMap.Key) != len(rawMap.Value) {
+					return status.New(codes.InvalidArgument, "length of keys and values must match")
+				}
+
+				for i, key := range rawMap.Key {
+					ctx[key] = rawMap.Value[i]
+				}
+			}
+
+			// Send the message
+			m.process(l, &mailerv1.SendBatchRequest{
+				To:      []string{email},
+				From:    in.From,
+				Subject: in.Subject,
+				Body:    tmpl.Render(ctx, isHtml),
+				Type:    in.Type,
+				ReplyTo: in.ReplyTo,
+			})
+		}
+
+		return nil
+	})
+
+	if s != nil {
+		return nil, s.Err()
+	}
+	return &mailerv1.SendTemplateResponse{}, nil
 }
 
 // Do the work of processing the messages
