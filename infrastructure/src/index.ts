@@ -28,6 +28,10 @@ class Mailer extends ComponentResource {
               Action: ['ses:SendEmail', 'ses:SendRawEmail'],
               Resource: [sesIdentity],
             },
+            {
+              Effect: 'Allow',
+              Action: ['ses:ListEmailIdentities'],
+            },
           ],
         },
       },
