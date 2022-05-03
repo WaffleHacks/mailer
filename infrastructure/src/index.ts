@@ -25,12 +25,8 @@ class Mailer extends ComponentResource {
           Statement: [
             {
               Effect: 'Allow',
-              Action: ['ses:SendEmail', 'ses:SendRawEmail'],
+              Action: ['ses:SendEmail', 'ses:SendRawEmail', 'ses:ListEmailIdentities'],
               Resource: [sesIdentity],
-            },
-            {
-              Effect: 'Allow',
-              Action: ['ses:ListEmailIdentities'],
             },
           ],
         },
