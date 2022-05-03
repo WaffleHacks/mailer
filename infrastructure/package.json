@@ -1,0 +1,35 @@
+{
+  "name": "@wafflehacks/mailer",
+  "version": "0.1.0",
+  "description": "A Pulumi component for setting up the mailer",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WaffleHacks/mailer.git"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/WaffleHacks/mailer",
+  "bugs": {
+    "url": "https://github.com/WaffleHacks/mailer/issues"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint . --fix",
+    "prepare": "yarn build",
+    "prepublishOnly": "yarn lint"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.22.0",
+    "@typescript-eslint/parser": "^5.22.0",
+    "eslint": "^8.14.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.6.2",
+    "typescript": "^4.6.4"
+  }
+}
