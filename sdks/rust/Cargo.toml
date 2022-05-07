@@ -4,6 +4,10 @@ description = "The Rust SDK for the WaffleHacks mailer"
 version = "0.2.0"
 edition = "2021"
 
+license = "MIT"
+homepage = "https://github.com/WaffleHacks/mailer"
+repository = "https://github.com/WaffleHacks/mailer"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
