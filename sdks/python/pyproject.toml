@@ -1,8 +1,12 @@
 [tool.poetry]
-name = "mailer"
+name = "wafflehacks-mailer"
 version = "0.2.0"
 description = "The Python SDK for the WaffleHacks mailer"
 authors = ["Alex Krantz <alex@krantz.dev>"]
+
+packages = [
+    { include = "mailer" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"

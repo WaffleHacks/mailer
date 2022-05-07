@@ -1,0 +1,23 @@
+name: Packages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: poetry build
+        working-directory: ./sdks/python
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
+          packages_dir: ./sdks/python/dist
+          skip_existing: true
