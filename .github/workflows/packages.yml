@@ -25,3 +25,17 @@ jobs:
           password: ${{ secrets.PYPI_TOKEN }}
           packages_dir: ./sdks/python/dist
           skip_existing: true
+
+  rust:
+    name: Rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - run: cargo publish
+        working-directory: ./sdks/rust
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
