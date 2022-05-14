@@ -1,11 +1,18 @@
 import { Policy } from '@pulumi/aws/iam';
-import { ComponentResource, ComponentResourceOptions, Input, Output, ResourceOptions } from '@pulumi/pulumi';
+import {
+  ComponentResource,
+  ComponentResourceOptions,
+  Input,
+  Output,
+  ResourceOptions,
+  interpolate,
+} from '@pulumi/pulumi';
 
 interface Args {
   /**
-   * The ARN of the SES identity to allow sending on
+   * The domains emails can be sent from
    */
-  sesIdentity: Input<string>;
+  fromDomains: Input<string>[];
 }
 
 class Mailer extends ComponentResource {
@@ -15,7 +22,7 @@ class Mailer extends ComponentResource {
     super('wafflehacks:mailer:Mailer', name, { options: opts }, opts);
 
     const defaultResourceOptions: ResourceOptions = { parent: this };
-    const { sesIdentity } = args;
+    const { fromDomains } = args;
 
     const policy = new Policy(
       `${name}-policy`,
@@ -26,7 +33,12 @@ class Mailer extends ComponentResource {
             {
               Effect: 'Allow',
               Action: ['ses:SendEmail', 'ses:SendRawEmail'],
-              Resource: [sesIdentity],
+              Resource: '*',
+              Condition: {
+                'ForAllValues:StringLike': {
+                  'ses:FromAddress': fromDomains.map((d) => interpolate`*@${d}`),
+                },
+              },
             },
             {
               Effect: 'Allow',
