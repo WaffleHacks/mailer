@@ -11,21 +11,27 @@ class AsyncClient(object):
     """
 
     def __init__(self, server: str):
-        base_url = server
-        if not base_url.endswith("/"):
-            base_url += "/"
+        self.base_url = server
+        if not self.base_url.endswith("/"):
+            self.base_url += "/"
 
-        self.session = ClientSession(
-            base_url, headers={"Content-Type": "application/json"}
-        )
+        self.session: Optional[ClientSession] = None
 
     def close(self):
         """
         Close the connection to the mailer
         """
-        self.session.close()
+        if self.session is not None:
+            self.session.close()
+
+    async def __init_session(self):
+        if self.session is None:
+            self.session = ClientSession(self.base_url, headers={"Content-Type": "application/json"})
 
     async def _dispatch(self, path: str, body: str):
+        await self.__init_session()
+        assert self.session is not None
+
         response = await self.session.post(path, data=body)
 
         if response.status == 400:
