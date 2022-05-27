@@ -65,9 +65,9 @@ func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
 			}
 
 			if err == nil {
-				l.Info("sent message(s)", zap.Int("count", len(message.To)))
+				l.Info("sent message(s)", zap.Int("count", len(message.To)), zap.Strings("to", message.To))
 			} else {
-				l.Error("failed to send message(s)", zap.Error(err))
+				l.Error("failed to send message(s)", zap.Error(err), zap.Strings("to", message.To))
 			}
 			span.Finish()
 
