@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 	"go.opentelemetry.io/otel"
 )
 
@@ -77,6 +78,8 @@ func NewSES(id string) (Provider, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	otelaws.AppendMiddlewares(&cfg.APIOptions)
 
 	// Create and verify the client
 	client := sesv2.NewFromConfig(cfg)
