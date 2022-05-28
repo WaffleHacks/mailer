@@ -55,6 +55,9 @@ var (
 	providerAttr = attribute.Key("mailer.worker.provider")
 	workerAttr   = attribute.Key("mailer.worker.id")
 
+	spanKindAttr = attribute.Key("span.kind").String("worker")
+	spanTypeAttr = attribute.Key("type").String("worker")
+
 	errorAttr            = attribute.Key("error")
 	errorDescriptionAttr = attribute.Key("error.description")
 )
@@ -78,6 +81,8 @@ func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
 					subjectAttr.String(message.Subject),
 					providerAttr.String(matcher.id),
 					workerAttr.String(workerId),
+					spanKindAttr,
+					spanTypeAttr,
 				),
 				trace.WithNewRoot(),
 			)
