@@ -6,14 +6,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/WaffleHacks/mailer/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
-	"github.com/getsentry/sentry-go"
-
-	"github.com/WaffleHacks/mailer/logging"
 )
 
 func newContent(data string) *types.Content {
@@ -28,9 +26,6 @@ type SES struct {
 }
 
 func (s *SES) Send(ctx context.Context, _ *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
-	span := sentry.TransactionFromContext(ctx).StartChild("send")
-	defer span.Finish()
-
 	input := &sesv2.SendEmailInput{
 		Content: &types.EmailContent{
 			Simple: &types.Message{
@@ -52,7 +47,7 @@ func (s *SES) Send(ctx context.Context, _ *logging.Logger, to, from, subject, bo
 		input.ReplyToAddresses = []string{*replyTo}
 	}
 
-	_, err := s.client.SendEmail(span.Context(), input)
+	_, err := s.client.SendEmail(ctx, input)
 	return err
 }
 

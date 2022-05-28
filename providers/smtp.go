@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/getsentry/sentry-go"
 	"gopkg.in/gomail.v2"
 
 	"github.com/WaffleHacks/mailer/logging"
@@ -20,9 +19,6 @@ type SMTP struct {
 }
 
 func (s *SMTP) Send(ctx context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
-	span := sentry.TransactionFromContext(ctx)
-	defer span.Context()
-
 	// Reconnect if necessary
 	if !s.open {
 		sender, err := s.dialer.Dial()
