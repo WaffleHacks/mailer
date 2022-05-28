@@ -75,12 +75,13 @@ func (m *mailerServer) process(ctx context.Context, logger *logging.Logger, in *
 
 	// Enqueue the message for sending
 	m.queue <- daemon.Message{
-		To:      in.To,
-		From:    in.From,
-		Subject: in.Subject,
-		Body:    in.Body,
-		Type:    daemon.BodyType(bodyType),
-		ReplyTo: replyTo,
+		To:          in.To,
+		From:        in.From,
+		Subject:     in.Subject,
+		Body:        in.Body,
+		Type:        daemon.BodyType(bodyType),
+		ReplyTo:     replyTo,
+		SpanContext: span.SpanContext(),
 	}
 
 	return nil

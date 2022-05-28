@@ -35,12 +35,13 @@ func (b BodyType) String() string {
 
 // Message represents an email to be sent to one or more recipients
 type Message struct {
-	To      []string
-	From    string
-	Subject string
-	Body    string
-	Type    BodyType
-	ReplyTo *string
+	To          []string
+	From        string
+	Subject     string
+	Body        string
+	Type        BodyType
+	ReplyTo     *string
+	SpanContext trace.SpanContext
 }
 
 var (
@@ -52,9 +53,6 @@ var (
 	subjectAttr  = attribute.Key("mailer.subject")
 	providerAttr = attribute.Key("mailer.worker.provider")
 	workerAttr   = attribute.Key("mailer.worker.id")
-
-	spanKindAttr = attribute.Key("span.kind").String("worker")
-	spanTypeAttr = attribute.Key("type").String("worker")
 
 	errorAttr            = attribute.Key("error")
 	errorDescriptionAttr = attribute.Key("error.description")
@@ -79,9 +77,9 @@ func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
 					subjectAttr.String(message.Subject),
 					providerAttr.String(matcher.id),
 					workerAttr.String(workerId),
-					spanKindAttr,
-					spanTypeAttr,
 				),
+				trace.WithSpanKind(trace.SpanKindConsumer),
+				trace.WithLinks(trace.Link{SpanContext: message.SpanContext}),
 				trace.WithNewRoot(),
 			)
 

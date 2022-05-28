@@ -64,12 +64,13 @@ func (m *mailerServer) SendTemplate(ctx context.Context, in *mailerv1.SendTempla
 
 			// Send the message
 			m.queue <- daemon.Message{
-				To:      []string{email},
-				From:    in.From,
-				Subject: in.Subject,
-				Body:    tmpl.Render(templateCtx, isHtml),
-				Type:    daemon.BodyType(bodyType),
-				ReplyTo: replyTo,
+				To:          []string{email},
+				From:        in.From,
+				Subject:     in.Subject,
+				Body:        tmpl.Render(templateCtx, isHtml),
+				Type:        daemon.BodyType(bodyType),
+				ReplyTo:     replyTo,
+				SpanContext: span.SpanContext(),
 			}
 			span.End()
 		}
