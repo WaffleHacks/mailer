@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/WaffleHacks/mailer/tracing"
 	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -41,6 +42,17 @@ func main() {
 			log.Fatalf("failed to initialize sentry: %v\n", err)
 		}
 		defer sentry.Flush(time.Second * 3)
+	}
+
+	// Initialize tracing
+	ctx := context.Background()
+	provider, err := tracing.Initialize(ctx, config.Tracing, config.Development)
+	if err != nil {
+		log.Fatalf("failed to initalize tracing: %v\n", err)
+	} else if provider != nil {
+		defer func() {
+			_ = provider.Shutdown(ctx)
+		}()
 	}
 
 	logger, err := logging.New(config.LogLevel, config.Development)
