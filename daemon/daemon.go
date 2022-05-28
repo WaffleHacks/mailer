@@ -15,10 +15,10 @@ type Daemon struct {
 }
 
 // New spawns a new sender daemon to process all the incoming messages
-func New(matchers []*Matcher) *Daemon {
+func New(ctx context.Context, matchers []*Matcher) *Daemon {
 	// Allow gracefully stopping the daemon
 	var wg sync.WaitGroup
-	ctx, cancel := context.WithCancel(context.Background())
+	cancellable, cancel := context.WithCancel(ctx)
 
 	// Create the incoming work queue
 	queue := make(chan Message)
@@ -27,7 +27,7 @@ func New(matchers []*Matcher) *Daemon {
 	for _, matcher := range matchers {
 		wg.Add(matcher.workers)
 		for i := 0; i < matcher.workers; i++ {
-			go worker(ctx, matcher, &wg)
+			go worker(cancellable, matcher, &wg)
 		}
 	}
 
@@ -37,7 +37,7 @@ func New(matchers []*Matcher) *Daemon {
 		stop:     cancel,
 		wg:       &wg,
 	}
-	go d.dispatcher(ctx)
+	go d.dispatcher(cancellable)
 
 	return d
 }

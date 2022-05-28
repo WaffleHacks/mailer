@@ -10,7 +10,15 @@ import (
 	"strings"
 
 	"github.com/WaffleHacks/mailer/logging"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
+)
+
+var (
+	debugTracer = otel.Tracer("github.com/WaffleHacks/mailer/providers/debug")
+
+	debugSimulatedErrorAttr = attribute.Key("mailer.debug.simulated-error")
 )
 
 type Debug struct {
@@ -19,7 +27,7 @@ type Debug struct {
 }
 
 func (d *Debug) shouldError() error {
-	if rand.Intn(100) < d.failureRate {
+	if rand.Intn(100) <= d.failureRate {
 		return errors.New("simulated error")
 	}
 
@@ -35,8 +43,12 @@ func (d *Debug) formatMessage(to zap.Field, from, subject, body string, htmlBody
 	return fields
 }
 
-func (d *Debug) Send(_ context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+func (d *Debug) Send(ctx context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+	_, span := debugTracer.Start(ctx, "send")
+	defer span.End()
+
 	if err := d.shouldError(); err != nil {
+		span.SetAttributes(debugSimulatedErrorAttr.Bool(true))
 		l.Debug("simulating error")
 		return err
 	}
@@ -46,8 +58,12 @@ func (d *Debug) Send(_ context.Context, l *logging.Logger, to, from, subject, bo
 	return nil
 }
 
-func (d *Debug) SendBatch(_ context.Context, l *logging.Logger, to []string, from, subject, body string, htmlBody, replyTo *string) error {
+func (d *Debug) SendBatch(ctx context.Context, l *logging.Logger, to []string, from, subject, body string, htmlBody, replyTo *string) error {
+	_, span := debugTracer.Start(ctx, "send-batch")
+	defer span.End()
+
 	if err := d.shouldError(); err != nil {
+		span.SetAttributes(debugSimulatedErrorAttr.Bool(true))
 		l.Debug("simulating error")
 		return err
 	}

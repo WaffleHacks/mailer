@@ -9,16 +9,22 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mailgun/mailgun-go/v4"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 
 	"github.com/WaffleHacks/mailer/logging"
 )
+
+var mailgunTracer = otel.Tracer("github.com/WaffleHacks/mailer/providers/mailgun")
 
 type MailGun struct {
 	mg mailgun.Mailgun
 }
 
 func (m *MailGun) Send(ctx context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+	_, span := mailgunTracer.Start(ctx, "send")
+	defer span.End()
+
 	msg := m.mg.NewMessage(from, subject, body, to)
 	if htmlBody != nil {
 		msg.SetHtml(*htmlBody)
@@ -42,6 +48,9 @@ func (m *MailGun) Send(ctx context.Context, l *logging.Logger, to, from, subject
 }
 
 func (m *MailGun) SendBatch(ctx context.Context, l *logging.Logger, to []string, from, subject, body string, htmlBody, replyTo *string) error {
+	_, span := mailgunTracer.Start(ctx, "send-batch")
+	defer span.End()
+
 	msg := m.mg.NewMessage(from, subject, body)
 	for _, address := range to {
 		if err := msg.AddRecipient(address); err != nil {

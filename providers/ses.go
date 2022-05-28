@@ -12,7 +12,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
+	"go.opentelemetry.io/otel"
 )
+
+var sesTracer = otel.Tracer("github.com/WaffleHacks/mailer/providers/ses")
 
 func newContent(data string) *types.Content {
 	return &types.Content{
@@ -26,6 +29,9 @@ type SES struct {
 }
 
 func (s *SES) Send(ctx context.Context, _ *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+	_, span := sesTracer.Start(ctx, "send")
+	defer span.End()
+
 	input := &sesv2.SendEmailInput{
 		Content: &types.EmailContent{
 			Simple: &types.Message{

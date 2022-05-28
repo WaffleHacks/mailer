@@ -7,10 +7,13 @@ import (
 	"strconv"
 	"strings"
 
+	"go.opentelemetry.io/otel"
 	"gopkg.in/gomail.v2"
 
 	"github.com/WaffleHacks/mailer/logging"
 )
+
+var smtpTracer = otel.Tracer("github.com/WaffleHacks/mailer/providers/smtp")
 
 type SMTP struct {
 	dialer *gomail.Dialer
@@ -19,19 +22,48 @@ type SMTP struct {
 }
 
 func (s *SMTP) Send(ctx context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
-	// Reconnect if necessary
+	_, span := smtpTracer.Start(ctx, "send")
+	defer span.End()
+
+	if err := s.reconnect(ctx, l); err != nil {
+		return err
+	}
+
+	msg := buildMessage(ctx, to, from, subject, body, htmlBody, replyTo)
+
+	// Send the message
+	if err := s.sender.Send(from, []string{to}, msg); err != nil {
+		s.open = false
+		return err
+	}
+
+	return nil
+}
+
+// reconnect initiates the connection process if necessary
+func (s *SMTP) reconnect(ctx context.Context, l *logging.Logger) error {
 	if !s.open {
+		_, span := smtpTracer.Start(ctx, "reconnect")
+		defer span.End()
+
 		sender, err := s.dialer.Dial()
 		if err != nil {
 			l.Error("failed to reconnect to smtp provider")
 			return err
 		}
+
 		l.Info("reconnected to smtp provider")
 		s.sender = sender
 		s.open = true
 	}
 
-	// Construct the message
+	return nil
+}
+
+func buildMessage(ctx context.Context, to, from, subject, body string, htmlBody, replyTo *string) *gomail.Message {
+	_, span := smtpTracer.Start(ctx, "build-message")
+	defer span.End()
+
 	msg := gomail.NewMessage(gomail.SetCharset("UTF-8"))
 	msg.SetHeader("To", to)
 	msg.SetHeader("From", from)
@@ -44,13 +76,7 @@ func (s *SMTP) Send(ctx context.Context, l *logging.Logger, to, from, subject, b
 		msg.SetHeader("Reply-To", *replyTo)
 	}
 
-	// Send the message
-	if err := s.sender.Send(from, []string{to}, msg); err != nil {
-		s.open = false
-		return err
-	}
-
-	return nil
+	return msg
 }
 
 func NewSMTP(id string) (Provider, error) {

@@ -62,7 +62,7 @@ func main() {
 	defer logger.Sync()
 
 	// Setup the mailer daemon
-	mailer := daemon.New(config.Providers)
+	mailer := daemon.New(ctx, config.Providers)
 
 	// Acquire the gRPC listener
 	listener, err := net.Listen("tcp", config.GRPCAddress)
