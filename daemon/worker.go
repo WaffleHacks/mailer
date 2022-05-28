@@ -35,14 +35,12 @@ func (b BodyType) String() string {
 
 // Message represents an email to be sent to one or more recipients
 type Message struct {
-	To       []string
-	From     string
-	Subject  string
-	Body     string
-	Type     BodyType
-	ReplyTo  *string
-	Template bool
-	Context  []map[string]string
+	To      []string
+	From    string
+	Subject string
+	Body    string
+	Type    BodyType
+	ReplyTo *string
 }
 
 var (
