@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/WaffleHacks/mailer/tracing"
 	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -43,6 +44,17 @@ func main() {
 		defer sentry.Flush(time.Second * 3)
 	}
 
+	// Initialize tracing
+	ctx := context.Background()
+	provider, err := tracing.Initialize(ctx, config.Tracing, config.Development)
+	if err != nil {
+		log.Fatalf("failed to initalize tracing: %v\n", err)
+	} else if provider != nil {
+		defer func() {
+			_ = provider.Shutdown(ctx)
+		}()
+	}
+
 	logger, err := logging.New(config.LogLevel, config.Development)
 	if err != nil {
 		log.Fatalf("failed to initialize logging: %v\n", err)
@@ -50,7 +62,7 @@ func main() {
 	defer logger.Sync()
 
 	// Setup the mailer daemon
-	mailer := daemon.New(config.Providers)
+	mailer := daemon.New(ctx, config.Providers)
 
 	// Acquire the gRPC listener
 	listener, err := net.Listen("tcp", config.GRPCAddress)

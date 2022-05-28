@@ -6,15 +6,17 @@ import (
 	"os"
 	"strings"
 
+	"github.com/WaffleHacks/mailer/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
-	"github.com/getsentry/sentry-go"
-
-	"github.com/WaffleHacks/mailer/logging"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
+	"go.opentelemetry.io/otel"
 )
+
+var sesTracer = otel.Tracer("github.com/WaffleHacks/mailer/providers/ses")
 
 func newContent(data string) *types.Content {
 	return &types.Content{
@@ -28,8 +30,8 @@ type SES struct {
 }
 
 func (s *SES) Send(ctx context.Context, _ *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
-	span := sentry.TransactionFromContext(ctx).StartChild("send")
-	defer span.Finish()
+	_, span := sesTracer.Start(ctx, "send")
+	defer span.End()
 
 	input := &sesv2.SendEmailInput{
 		Content: &types.EmailContent{
@@ -52,7 +54,7 @@ func (s *SES) Send(ctx context.Context, _ *logging.Logger, to, from, subject, bo
 		input.ReplyToAddresses = []string{*replyTo}
 	}
 
-	_, err := s.client.SendEmail(span.Context(), input)
+	_, err := s.client.SendEmail(ctx, input)
 	return err
 }
 
@@ -76,6 +78,8 @@ func NewSES(id string) (Provider, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	otelaws.AppendMiddlewares(&cfg.APIOptions)
 
 	// Create and verify the client
 	client := sesv2.NewFromConfig(cfg)

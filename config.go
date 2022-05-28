@@ -27,6 +27,8 @@ type Config struct {
 
 	Workers int
 
+	Tracing bool
+
 	Providers []*daemon.Matcher
 }
 
@@ -45,9 +47,6 @@ func ReadConfig() (*Config, error) {
 	if err := level.UnmarshalText([]byte(rawLevel)); err != nil {
 		return nil, err
 	}
-
-	rawDevelopment := strings.ToLower(getEnvOrDefault("MAILER_DEVELOPMENT", "no"))
-	development := rawDevelopment == "y" || rawDevelopment == "yes" || rawDevelopment == "t" || rawDevelopment == "true"
 
 	var dsn *sentry.Dsn
 	if rawDsn := os.Getenv("MAILER_SENTRY_DSN"); len(rawDsn) != 0 {
@@ -101,7 +100,8 @@ func ReadConfig() (*Config, error) {
 		HTTPAddress: net.JoinHostPort(address, httpPort),
 		SentryDsn:   dsn,
 		LogLevel:    level,
-		Development: development,
+		Development: getEnvBool("MAILER_DEVELOPMENT"),
+		Tracing:     getEnvBool("MAILER_ENABLE_TRACING"),
 		Providers:   configuredProviders,
 	}, nil
 }
@@ -112,4 +112,9 @@ func getEnvOrDefault(key, defaultValue string) string {
 		return defaultValue
 	}
 	return value
+}
+
+func getEnvBool(key string) bool {
+	raw := strings.ToLower(os.Getenv(key))
+	return raw == "y" || raw == "yes" || raw == "t" || raw == "true"
 }

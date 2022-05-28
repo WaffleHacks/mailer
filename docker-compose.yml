@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.34
+    ports:
+      - "6231:6831/udp"
+      - "6286:16686"
+
+networks:
+  default:
