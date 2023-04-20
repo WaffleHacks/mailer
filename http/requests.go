@@ -12,7 +12,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/WaffleHacks/mailer/daemon"
-	"github.com/WaffleHacks/mailer/logging"
 )
 
 // CommonRequest contains all the shared fields between the different sending types
@@ -99,7 +98,11 @@ func validate[T any](ctx context.Context, recipients T, common CommonRequest, re
 
 func isEmailValid(address string, field string) error {
 	if _, err := mail.ParseAddress(address); err != nil {
-		logging.L().Named("http.validator").Warn("invalid email address format", zap.String("field", field), zap.String("email", address))
+		zap.L().Named("http.validator").Warn(
+			"invalid email address format",
+			zap.String("field", field),
+			zap.String("email", address),
+		)
 		return fmt.Errorf("invalid %s email address format", field)
 	}
 

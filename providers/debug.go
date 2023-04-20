@@ -12,8 +12,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
-
-	"github.com/WaffleHacks/mailer/logging"
 )
 
 var (
@@ -44,7 +42,7 @@ func (d *Debug) formatMessage(to zap.Field, from, subject, body string, htmlBody
 	return fields
 }
 
-func (d *Debug) Send(ctx context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+func (d *Debug) Send(ctx context.Context, l *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := debugTracer.Start(ctx, "send")
 	defer span.End()
 
@@ -59,7 +57,7 @@ func (d *Debug) Send(ctx context.Context, l *logging.Logger, to, from, subject, 
 	return nil
 }
 
-func (d *Debug) SendBatch(ctx context.Context, l *logging.Logger, to []string, from, subject, body string, htmlBody, replyTo *string) error {
+func (d *Debug) SendBatch(ctx context.Context, l *zap.Logger, to []string, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := debugTracer.Start(ctx, "send-batch")
 	defer span.End()
 

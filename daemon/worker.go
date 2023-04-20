@@ -11,7 +11,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
-	"github.com/WaffleHacks/mailer/logging"
 	"github.com/WaffleHacks/mailer/providers"
 )
 
@@ -68,7 +67,7 @@ var (
 // worker processes and sends the incoming messages
 func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
 	workerId := gonanoid.Must(8)
-	l := logging.L().Named("daemon:worker").With(zap.String("provider", matcher.id), zap.String("id", workerId))
+	l := zap.L().Named("daemon:worker").With(zap.String("provider", matcher.id), zap.String("id", workerId))
 	l.Info("worker started")
 
 	batchedProvider, supportsBatching := matcher.provider.(providers.BatchedProvider)

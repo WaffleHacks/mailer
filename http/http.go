@@ -42,7 +42,7 @@ func New(address string, queue chan daemon.Message) *http.Server {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(tracingMiddleware)
-	r.Use(logging.Request(logging.L().Named("http")))
+	r.Use(logging.Request(zap.L().Named("http")))
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Heartbeat("/ping"))
 
@@ -59,7 +59,7 @@ func New(address string, queue chan daemon.Message) *http.Server {
 func serverName() string {
 	hostname, err := os.Hostname()
 	if err != nil {
-		logging.L().Fatal("failed to retrieve hostname", zap.Error(err))
+		zap.L().Fatal("failed to retrieve hostname", zap.Error(err))
 	}
 	return hostname
 }

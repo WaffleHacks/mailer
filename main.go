@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
 
 	"github.com/WaffleHacks/mailer/http"
@@ -22,24 +21,6 @@ func main() {
 	config, err := ReadConfig()
 	if err != nil {
 		log.Fatalf("failed to read configuration: %v\n", err)
-	}
-
-	// Initialize sentry if present
-	if config.SentryDsn != nil {
-		options := sentry.ClientOptions{
-			Dsn:              config.SentryDsn.String(),
-			TracesSampleRate: 0.5,
-		}
-		if config.Development {
-			options.Environment = "development"
-		} else {
-			options.Environment = "production"
-		}
-
-		if err := sentry.Init(options); err != nil {
-			log.Fatalf("failed to initialize sentry: %v\n", err)
-		}
-		defer sentry.Flush(time.Second * 3)
 	}
 
 	// Initialize tracing

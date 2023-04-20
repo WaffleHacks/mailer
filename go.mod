@@ -8,7 +8,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.20
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.17.4
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/getsentry/sentry-go v0.12.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/gobwas/glob v0.2.3
 	github.com/joho/godotenv v1.5.1

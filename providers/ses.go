@@ -13,8 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 	"go.opentelemetry.io/otel"
-
-	"github.com/WaffleHacks/mailer/logging"
+	"go.uber.org/zap"
 )
 
 var sesTracer = otel.Tracer("github.com/WaffleHacks/mailer/providers/ses")
@@ -30,7 +29,7 @@ type SES struct {
 	client *sesv2.Client
 }
 
-func (s *SES) Send(ctx context.Context, _ *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+func (s *SES) Send(ctx context.Context, _ *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := sesTracer.Start(ctx, "send")
 	defer span.End()
 

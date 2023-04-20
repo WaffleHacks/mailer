@@ -2,7 +2,7 @@ package logging
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -11,7 +11,7 @@ import (
 )
 
 // Request is an HTTP middleware to log requests and responses
-func Request(logger *Logger) func(next http.Handler) http.Handler {
+func Request(logger *zap.Logger) func(next http.Handler) http.Handler {
 	var f middleware.LogFormatter = &requestLogger{logger}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +25,7 @@ func Request(logger *Logger) func(next http.Handler) http.Handler {
 			defer func() {
 				var respBody []byte
 				if ww.Status() >= 400 {
-					respBody, _ = ioutil.ReadAll(buf)
+					respBody, _ = io.ReadAll(buf)
 				}
 				entry.Write(ww.Status(), ww.BytesWritten(), ww.Header(), time.Since(start), respBody)
 			}()
@@ -36,7 +36,7 @@ func Request(logger *Logger) func(next http.Handler) http.Handler {
 }
 
 type requestLogger struct {
-	Logger *Logger
+	Logger *zap.Logger
 }
 
 func (l *requestLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
@@ -53,7 +53,7 @@ func (l *requestLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
 }
 
 type RequestLoggerEntry struct {
-	Logger *Logger
+	Logger *zap.Logger
 }
 
 func (l *RequestLoggerEntry) Write(status, bytes int, headers http.Header, elapsed time.Duration, _ interface{}) {
@@ -87,7 +87,7 @@ func (l *RequestLoggerEntry) Panic(v interface{}, stack []byte) {
 	}
 }
 
-func logLevelForStatus(logger *Logger, status int) func(msg string, fields ...zap.Field) {
+func logLevelForStatus(logger *zap.Logger, status int) func(msg string, fields ...zap.Field) {
 	switch {
 	case status <= 0:
 		return logger.Warn

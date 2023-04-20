@@ -8,9 +8,8 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"gopkg.in/gomail.v2"
-
-	"github.com/WaffleHacks/mailer/logging"
 )
 
 var smtpTracer = otel.Tracer("github.com/WaffleHacks/mailer/providers/smtp")
@@ -21,7 +20,7 @@ type SMTP struct {
 	open   bool
 }
 
-func (s *SMTP) Send(ctx context.Context, l *logging.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
+func (s *SMTP) Send(ctx context.Context, l *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := smtpTracer.Start(ctx, "send")
 	defer span.End()
 
@@ -41,7 +40,7 @@ func (s *SMTP) Send(ctx context.Context, l *logging.Logger, to, from, subject, b
 }
 
 // reconnect initiates the connection process if necessary
-func (s *SMTP) reconnect(ctx context.Context, l *logging.Logger) error {
+func (s *SMTP) reconnect(ctx context.Context, l *zap.Logger) error {
 	if !s.open {
 		_, span := smtpTracer.Start(ctx, "reconnect")
 		defer span.End()
