@@ -9,7 +9,7 @@ WORKDIR /build
 COPY . .
 RUN set -x && \
     go get -d -v . && \
-    CGO_ENABLED=0 GOOS=linux go build -a -o mailer
+    CGO_ENABLED=0 GOOS=linux go build -a -o mailer -buildvcs false
 
 FROM scratch
 
