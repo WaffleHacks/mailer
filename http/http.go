@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/riandyrn/otelchi"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
@@ -33,26 +33,29 @@ type mailerServer struct {
 
 // New creates a new HTTP server
 func New(address string, queue chan daemon.Message) *http.Server {
-	r := chi.NewRouter()
+	router := chi.NewRouter()
 
 	m := &mailerServer{queue: queue}
 
-	tracingMiddleware := otelchi.Middleware(serverName(), otelchi.WithChiRoutes(r), otelchi.WithFilter(routeFilter))
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(logging.Request(zap.L().Named("http")))
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.Heartbeat("/ping"))
 
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(tracingMiddleware)
-	r.Use(logging.Request(zap.L().Named("http")))
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Heartbeat("/ping"))
-
-	r.Post("/send", m.send)
-	r.Post("/send/batch", m.sendBatch)
-	r.Post("/send/template", m.sendTemplate)
+	router.Post("/send", m.send)
+	router.Post("/send/batch", m.sendBatch)
+	router.Post("/send/template", m.sendTemplate)
 
 	return &http.Server{
-		Addr:    address,
-		Handler: r,
+		Addr: address,
+		Handler: otelhttp.NewHandler(
+			router,
+			"request",
+			otelhttp.WithFilter(routeFilter),
+			otelhttp.WithSpanNameFormatter(spanNameFormatter),
+			otelhttp.WithServerName(serverName()),
+		),
 	}
 }
 
@@ -64,7 +67,15 @@ func serverName() string {
 	return hostname
 }
 
+func spanNameFormatter(_ string, r *http.Request) string {
+	return r.URL.Path
+}
+
 // routeFilter checks if a route should be ignored by OpenTelemetry
 func routeFilter(r *http.Request) bool {
-	return r.Method == http.MethodGet && r.URL.Path == "/ping"
+	if r.Method == http.MethodGet && r.URL.Path == "/ping" {
+		return false
+	}
+
+	return true
 }

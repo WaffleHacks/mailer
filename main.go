@@ -25,7 +25,7 @@ func main() {
 
 	// Initialize tracing
 	ctx := context.Background()
-	provider, err := tracing.Initialize(ctx, config.Tracing, config.Development)
+	provider, err := tracing.Initialize(ctx, config.Tracing)
 	if err != nil {
 		log.Fatalf("failed to initalize tracing: %v\n", err)
 	} else if provider != nil {

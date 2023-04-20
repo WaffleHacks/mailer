@@ -8,6 +8,7 @@ import (
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
@@ -59,9 +60,6 @@ var (
 	subjectAttr  = attribute.Key("mailer.subject")
 	providerAttr = attribute.Key("mailer.worker.provider")
 	workerAttr   = attribute.Key("mailer.worker.id")
-
-	errorAttr            = attribute.Key("error")
-	errorDescriptionAttr = attribute.Key("error.description")
 )
 
 // worker processes and sends the incoming messages
@@ -110,7 +108,8 @@ func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
 				l.Info("sent message(s)", zap.Int("count", len(message.To)), zap.Strings("to", message.To))
 			} else {
 				l.Error("failed to send message(s)", zap.Error(err), zap.Strings("to", message.To))
-				span.SetAttributes(errorAttr.Bool(true), errorDescriptionAttr.String(err.Error()))
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 			}
 			span.End()
 
