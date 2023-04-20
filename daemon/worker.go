@@ -33,13 +33,20 @@ func (b BodyType) String() string {
 	}
 }
 
+type Format string
+
+const (
+	FormatPlain Format = "PLAIN"
+	FormatHTML  Format = "HTML"
+)
+
 // Message represents an email to be sent to one or more recipients
 type Message struct {
 	To          []string
 	From        string
 	Subject     string
 	Body        string
-	Type        BodyType
+	Type        Format
 	ReplyTo     *string
 	SpanContext trace.SpanContext
 }
@@ -73,7 +80,7 @@ func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
 				trace.WithAttributes(
 					toAttr.StringSlice(message.To),
 					fromAttr.String(message.From),
-					typeAttr.String(message.Type.String()),
+					typeAttr.String(string(message.Type)),
 					subjectAttr.String(message.Subject),
 					providerAttr.String(matcher.id),
 					workerAttr.String(workerId),
@@ -117,11 +124,11 @@ func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
 }
 
 // makeBodies creates a plain text and, optionally, a HTML body based on the provided type
-func makeBodies(ctx context.Context, content string, bodyType BodyType) (string, *string) {
+func makeBodies(ctx context.Context, content string, format Format) (string, *string) {
 	_, span := tracer.Start(ctx, "make-body")
 	defer span.End()
 
-	if bodyType == BodyTypePlain {
+	if format == FormatPlain {
 		return content, nil
 	}
 

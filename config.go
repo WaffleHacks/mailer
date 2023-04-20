@@ -18,8 +18,7 @@ import (
 
 // Config contains all the runtime configuration information
 type Config struct {
-	GRPCAddress string
-	HTTPAddress string
+	Address string
 
 	SentryDsn   *sentry.Dsn
 	LogLevel    zap.AtomicLevel
@@ -38,9 +37,10 @@ func ReadConfig() (*Config, error) {
 		return nil, err
 	}
 
-	address := getEnvOrDefault("MAILER_ADDRESS", "127.0.0.1")
-	grpcPort := getEnvOrDefault("MAILER_GRPC_PORT", "9000")
-	httpPort := getEnvOrDefault("MAILER_HTTP_PORT", "8000")
+	address := getEnvOrDefault("MAILER_ADDRESS", "127.0.0.1:8000")
+	if _, _, err := net.SplitHostPort(address); err != nil {
+		return nil, err
+	}
 
 	rawLevel := getEnvOrDefault("MAILER_LOG_LEVEL", "info")
 	level := zap.NewAtomicLevel()
@@ -96,8 +96,7 @@ func ReadConfig() (*Config, error) {
 	}
 
 	return &Config{
-		GRPCAddress: net.JoinHostPort(address, grpcPort),
-		HTTPAddress: net.JoinHostPort(address, httpPort),
+		Address:     address,
 		SentryDsn:   dsn,
 		LogLevel:    level,
 		Development: getEnvBool("MAILER_DEVELOPMENT"),

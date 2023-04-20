@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/WaffleHacks/mailer/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -14,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 	"go.opentelemetry.io/otel"
+
+	"github.com/WaffleHacks/mailer/logging"
 )
 
 var sesTracer = otel.Tracer("github.com/WaffleHacks/mailer/providers/ses")

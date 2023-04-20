@@ -9,10 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/WaffleHacks/mailer/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
+
+	"github.com/WaffleHacks/mailer/logging"
 )
 
 var (
