@@ -3,14 +3,14 @@ package logging
 import (
 	"time"
 
-	gonanoid "github.com/matoous/go-nanoid"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
 )
 
 // GRPCRequest acts as middleware to add logging to a gRPC request
 func GRPCRequest(method string, action func(l *Logger) *status.Status) *status.Status {
-	l := L().Named("grpc").With(zap.String("method", method), zap.String("id", gonanoid.MustID(8)))
+	l := L().Named("grpc").With(zap.String("method", method), zap.String("id", gonanoid.Must(8)))
 	l.Info("started processing request")
 	start := time.Now()
 

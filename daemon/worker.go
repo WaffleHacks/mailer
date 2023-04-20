@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/k3a/html2text"
-	gonanoid "github.com/matoous/go-nanoid"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -60,7 +60,7 @@ var (
 
 // worker processes and sends the incoming messages
 func worker(ctx context.Context, matcher *Matcher, wg *sync.WaitGroup) {
-	workerId := gonanoid.MustID(8)
+	workerId := gonanoid.Must(8)
 	l := logging.L().Named("daemon:worker").With(zap.String("provider", matcher.id), zap.String("id", workerId))
 	l.Info("worker started")
 
