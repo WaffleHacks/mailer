@@ -1,4 +1,5 @@
 .env
 Dockerfile
-mailer/
+docker-compose.yml
+.github/
 sdks/
