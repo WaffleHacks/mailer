@@ -9,15 +9,30 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
+
+	"github.com/WaffleHacks/mailer/version"
 )
 
 func newTraceProvider(exp trace.SpanExporter) (*trace.TracerProvider, error) {
-	resouces, err := resource.New(context.Background(), resource.WithFromEnv())
+	serviceVersion := version.Commit
+	if version.Dirty {
+		serviceVersion += "-dirty"
+	}
+
+	r, err := resource.New(context.Background(),
+		resource.WithFromEnv(),
+		resource.WithProcess(),
+		resource.WithOS(),
+		resource.WithContainer(),
+		resource.WithHost(),
+		resource.WithAttributes(semconv.ServiceVersion(serviceVersion)),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return trace.NewTracerProvider(trace.WithBatcher(exp), trace.WithResource(resouces)), nil
+	return trace.NewTracerProvider(trace.WithBatcher(exp), trace.WithResource(r)), nil
 }
 
 // Initialize sets up OpenTelemetry tracing if requested

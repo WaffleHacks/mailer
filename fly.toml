@@ -7,7 +7,7 @@ app = "wafflehacks-mailer"
 primary_region = "yyz"
 
 [build]
-  image = "public.ecr.aws/wafflehacks/mailer:main"
+  image = "public.ecr.aws/wafflehacks/mailer:sha-SHORT_SHA"
 
 [deploy]
   strategy = "rolling"
@@ -31,7 +31,7 @@ primary_region = "yyz"
     type = "http"
     port = 8000
     method = "get"
-    path = "/ping"
+    path = "/health"
     protocol = "http"
 
     grace_period = "10s"
