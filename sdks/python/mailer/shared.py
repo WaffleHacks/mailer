@@ -1,9 +1,9 @@
 from enum import Enum
 
 
-class BodyType(Enum):
-    PLAIN = "BODY_TYPE_PLAIN"
-    HTML = "BODY_TYPE_HTML"
+class Format(Enum):
+    PLAIN = "PLAIN"
+    HTML = "HTML"
 
 
 class InvalidArgumentException(Exception):

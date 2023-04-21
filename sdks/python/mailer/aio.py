@@ -2,7 +2,7 @@ from aiohttp import ClientSession
 import json
 from typing import Dict, List, Optional
 
-from .shared import BodyType, InvalidArgumentException
+from .shared import Format, InvalidArgumentException
 
 
 class AsyncClient(object):
@@ -44,7 +44,7 @@ class AsyncClient(object):
         from_email: str,
         subject: str,
         body: str,
-        body_type: BodyType = BodyType.PLAIN,
+        format: Format = Format.PLAIN,
         reply_to: Optional[str] = None,
     ):
         """
@@ -53,7 +53,7 @@ class AsyncClient(object):
         :param from_email: the address of the sender in RFC 5322
         :param subject: the email subject
         :param body: the message body
-        :param body_type: the content type of the body
+        :param format: the content type of the body
         :param reply_to: an optional email to reply to
         """
 
@@ -65,7 +65,7 @@ class AsyncClient(object):
                     "from": from_email,
                     "subject": subject,
                     "body": body,
-                    "type": body_type.value,
+                    "format": format.value,
                     "reply_to": reply_to,
                 }
             ),
@@ -73,20 +73,20 @@ class AsyncClient(object):
 
     async def send_batch(
         self,
-        to_email: List[str],
+        to_emails: List[str],
         from_email: str,
         subject: str,
         body: str,
-        body_type: BodyType = BodyType.PLAIN,
+        format: Format = Format.PLAIN,
         reply_to: Optional[str] = None,
     ):
         """
         Send an email to many recipients
-        :param to_email: the addresses of the recipients
+        :param to_emails: the addresses of the recipients
         :param from_email: the address of the sender in RFC 5322
         :param subject: the email subject
         :param body: the message body
-        :param body_type: the content type of the body
+        :param format: the content type of the body
         :param reply_to: an optional email to reply to
         """
 
@@ -94,11 +94,11 @@ class AsyncClient(object):
             "/send/batch",
             json.dumps(
                 {
-                    "to": to_email,
+                    "to": to_emails,
                     "from": from_email,
                     "subject": subject,
                     "body": body,
-                    "type": body_type.value,
+                    "format": format.value,
                     "reply_to": reply_to,
                 }
             ),
@@ -110,7 +110,7 @@ class AsyncClient(object):
         from_email: str,
         subject: str,
         body: str,
-        body_type: BodyType = BodyType.PLAIN,
+        format: Format = Format.PLAIN,
         reply_to: Optional[str] = None,
     ):
         """
@@ -119,26 +119,19 @@ class AsyncClient(object):
         :param from_email: the address of the sender in RFC 5322 format
         :param subject: the email subject
         :param body: the message body template
-        :param body_type: the content type of the body
+        :param format: the content type of the body
         :param reply_to: an optional email to reply to
         """
-        # Transform the to contexts
-        prepared_to = {}
-        for key, context in to.items():
-            prepared_to[key] = {
-                "key": list(context.keys()),
-                "value": list(context.values()),
-            }
 
         await self._dispatch(
             "/send/template",
             json.dumps(
                 {
-                    "to": prepared_to,
+                    "to": to,
                     "from": from_email,
                     "subject": subject,
                     "body": body,
-                    "type": body_type.value,
+                    "format": format.value,
                     "reply_to": reply_to,
                 }
             ),
