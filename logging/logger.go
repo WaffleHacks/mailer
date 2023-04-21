@@ -3,6 +3,8 @@ package logging
 import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/WaffleHacks/mailer/version"
 )
 
 var (
@@ -44,11 +46,16 @@ func New(level zap.AtomicLevel, development bool) (*zap.Logger, error) {
 		OutputPaths:       []string{"stdout"},
 		ErrorOutputPaths:  []string{"stdout"},
 	}
-	logger, err := config.Build()
+	base, err := config.Build()
 	if err != nil {
 		return nil, err
 	}
 
+	logger := base.With(
+		zap.String("build.version", version.Commit),
+		zap.Bool("build.dirty", version.Dirty),
+		zap.String("build.go", version.GoVersion),
+	)
 	zap.ReplaceGlobals(logger)
 	developmentOption = development
 

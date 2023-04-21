@@ -13,6 +13,7 @@ import (
 
 	"github.com/WaffleHacks/mailer/daemon"
 	"github.com/WaffleHacks/mailer/logging"
+	"github.com/WaffleHacks/mailer/version"
 )
 
 var (
@@ -43,6 +44,7 @@ func New(address string, queue chan daemon.Message) *http.Server {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Heartbeat("/ping"))
 
+	router.Get("/health", healthcheck)
 	router.Post("/send", m.send)
 	router.Post("/send/batch", m.sendBatch)
 	router.Post("/send/template", m.sendTemplate)
@@ -57,6 +59,11 @@ func New(address string, queue chan daemon.Message) *http.Server {
 			otelhttp.WithServerName(serverName()),
 		),
 	}
+}
+
+func healthcheck(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(version.Printable))
 }
 
 func serverName() string {

@@ -31,7 +31,7 @@ primary_region = "yyz"
     type = "http"
     port = 8000
     method = "get"
-    path = "/ping"
+    path = "/health"
     protocol = "http"
 
     grace_period = "10s"
