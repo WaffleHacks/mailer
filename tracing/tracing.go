@@ -22,9 +22,7 @@ func newTraceProvider(exp trace.SpanExporter) (*trace.TracerProvider, error) {
 
 	r, err := resource.New(context.Background(),
 		resource.WithFromEnv(),
-		resource.WithProcess(),
-		resource.WithOS(),
-		resource.WithContainer(),
+		resource.WithTelemetrySDK(),
 		resource.WithHost(),
 		resource.WithAttributes(semconv.ServiceVersion(serviceVersion)),
 	)
