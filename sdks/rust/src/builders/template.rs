@@ -1,6 +1,6 @@
 use crate::{
     error::Result,
-    types::{BodyType, Request, TemplateContext},
+    types::{Format, Request},
     Client,
 };
 use std::collections::HashMap;
@@ -12,7 +12,7 @@ pub struct SendTemplateBuilder<'s> {
     from: &'s str,
     subject: &'s str,
     body: &'s str,
-    body_type: Option<BodyType>,
+    format: Option<Format>,
     reply_to: Option<&'s str>,
 }
 
@@ -29,14 +29,14 @@ impl<'s> SendTemplateBuilder<'s> {
             from,
             subject,
             body,
-            body_type: None,
+            format: None,
             reply_to: None,
         }
     }
 
     /// Set the type of the message body
-    pub fn body_type(mut self, body_type: BodyType) -> SendTemplateBuilder<'s> {
-        self.body_type = Some(body_type);
+    pub fn format(mut self, format: Format) -> SendTemplateBuilder<'s> {
+        self.format = Some(format);
         self
     }
 
@@ -58,17 +58,12 @@ impl<'s> SendTemplateBuilder<'s> {
 
     /// Send the request
     pub async fn send(self) -> Result<()> {
-        let to: HashMap<&'s str, TemplateContext<'s>> = self
-            .to
-            .into_iter()
-            .map(|(k, v)| (k, TemplateContext::from(v)))
-            .collect();
         let req = Request::new(
-            to,
+            self.to,
             self.from,
             self.subject,
             self.body,
-            self.body_type,
+            self.format,
             self.reply_to,
         );
 

@@ -1,6 +1,6 @@
 use crate::{
     error::Result,
-    types::{BodyType, Request},
+    types::{Format, Request},
     Client,
 };
 
@@ -10,7 +10,7 @@ pub struct SendBatchBuilder<'s> {
     from: &'s str,
     subject: &'s str,
     body: &'s str,
-    body_type: Option<BodyType>,
+    format: Option<Format>,
     reply_to: Option<&'s str>,
 }
 
@@ -27,7 +27,7 @@ impl<'s> SendBatchBuilder<'s> {
             from,
             subject,
             body,
-            body_type: None,
+            format: None,
             reply_to: None,
         }
     }
@@ -45,8 +45,8 @@ impl<'s> SendBatchBuilder<'s> {
     }
 
     /// Set the type of the message body
-    pub fn body_type(mut self, body_type: BodyType) -> SendBatchBuilder<'s> {
-        self.body_type = Some(body_type);
+    pub fn format(mut self, format: Format) -> SendBatchBuilder<'s> {
+        self.format = Some(format);
         self
     }
 
@@ -63,7 +63,7 @@ impl<'s> SendBatchBuilder<'s> {
             self.from,
             self.subject,
             self.body,
-            self.body_type,
+            self.format,
             self.reply_to,
         );
 

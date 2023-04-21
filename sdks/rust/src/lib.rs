@@ -12,7 +12,7 @@ mod types;
 use builders::*;
 pub use error::Error;
 use error::Result;
-pub use types::BodyType;
+pub use types::Format;
 use types::{Request, Response};
 
 /// A client for the WaffleHacks mailer
@@ -72,7 +72,7 @@ impl Client {
         subject: &'s str,
         body: &'s str,
     ) -> SendBuilder<'s> {
-        SendBuilder::new(&self, to, from, subject, body)
+        SendBuilder::new(self, to, from, subject, body)
     }
 
     /// Send an email to many recipients
@@ -82,7 +82,7 @@ impl Client {
         subject: &'s str,
         body: &'s str,
     ) -> SendBatchBuilder<'s> {
-        SendBatchBuilder::new(&self, from, subject, body)
+        SendBatchBuilder::new(self, from, subject, body)
     }
 
     /// Send a templated email to many recipients
@@ -92,6 +92,6 @@ impl Client {
         subject: &'s str,
         body: &'s str,
     ) -> SendTemplateBuilder<'s> {
-        SendTemplateBuilder::new(&self, from, subject, body)
+        SendTemplateBuilder::new(self, from, subject, body)
     }
 }

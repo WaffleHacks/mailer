@@ -1,6 +1,6 @@
 use crate::{
     error::Result,
-    types::{BodyType, Request},
+    types::{Format, Request},
     Client,
 };
 
@@ -10,7 +10,7 @@ pub struct SendBuilder<'s> {
     from: &'s str,
     subject: &'s str,
     body: &'s str,
-    body_type: Option<BodyType>,
+    format: Option<Format>,
     reply_to: Option<&'s str>,
 }
 
@@ -28,14 +28,14 @@ impl<'s> SendBuilder<'s> {
             from,
             subject,
             body,
-            body_type: None,
+            format: None,
             reply_to: None,
         }
     }
 
     /// Set the type of the message body
-    pub fn body_type(mut self, body_type: BodyType) -> SendBuilder<'s> {
-        self.body_type = Some(body_type);
+    pub fn format(mut self, format: Format) -> SendBuilder<'s> {
+        self.format = Some(format);
         self
     }
 
@@ -52,7 +52,7 @@ impl<'s> SendBuilder<'s> {
             self.from,
             self.subject,
             self.body,
-            self.body_type,
+            self.format,
             self.reply_to,
         );
 
