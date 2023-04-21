@@ -1,0 +1,40 @@
+# fly.toml app configuration file generated for wafflehacks-mailer on 2023-04-20T10:56:59-07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "wafflehacks-mailer"
+primary_region = "yyz"
+
+[build]
+  image = "public.ecr.aws/wafflehacks/mailer:main"
+
+[deploy]
+  strategy = "rolling"
+
+[env]
+  MAILER_ADDRESS = "0.0.0.0:8000"
+  MAILER_LOG_LEVEL = "info"
+  MAILER_DEVELOPMENT = "no"
+
+  MAILER_PROVIDERS = "ses"
+  MAILER_PROVIDER_SES_TYPE = "ses"
+  MAILER_PROVIDER_SES_WORKERS = "2"
+  MAILER_PROVIDER_SES_MATCHES = "@wafflehacks.org"
+
+  MAILER_ENABLE_TRACING = "yes"
+  OTEL_SERVICE_NAME = "mailer"
+  OTEL_EXPORTER_OTLP_ENDPOINT = "https://api.honeycomb.io:443"
+
+[checks]
+  [checks.alive]
+    type = "http"
+    port = 8000
+    method = "get"
+    path = "/ping"
+    protocol = "http"
+
+    grace_period = "10s"
+    interval = "15s"
+    restart_limit = 0
+    timeout = "3s"
