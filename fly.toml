@@ -7,7 +7,7 @@ app = "wafflehacks-mailer"
 primary_region = "yyz"
 
 [build]
-  image = "wafflehacks/mailer:main"
+  image = "public.ecr.aws/wafflehacks/mailer:main"
 
 [deploy]
   strategy = "rolling"
