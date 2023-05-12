@@ -42,7 +42,6 @@ func New(address string, queue chan daemon.Message) *http.Server {
 	router.Use(middleware.RealIP)
 	router.Use(logging.Request(zap.L().Named("http")))
 	router.Use(middleware.Recoverer)
-	router.Use(middleware.Heartbeat("/ping"))
 
 	router.Get("/health", healthcheck)
 	router.Post("/send", m.send)
@@ -55,7 +54,6 @@ func New(address string, queue chan daemon.Message) *http.Server {
 			router,
 			"request",
 			otelhttp.WithFilter(routeFilter),
-			otelhttp.WithSpanNameFormatter(spanNameFormatter),
 			otelhttp.WithServerName(serverName()),
 		),
 	}
@@ -74,13 +72,9 @@ func serverName() string {
 	return hostname
 }
 
-func spanNameFormatter(_ string, r *http.Request) string {
-	return r.URL.Path
-}
-
 // routeFilter checks if a route should be ignored by OpenTelemetry
 func routeFilter(r *http.Request) bool {
-	if r.Method == http.MethodGet && r.URL.Path == "/ping" {
+	if r.Method == http.MethodGet && r.URL.Path == "/health" {
 		return false
 	}
 
