@@ -15,6 +15,11 @@ func Request(logger *zap.Logger) func(next http.Handler) http.Handler {
 	var f middleware.LogFormatter = &requestLogger{logger}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                        if r.Method == http.MethodGet && r.URL.Path == "/health" {
+				next.ServeHTTP(w, r)
+				return
+                        }
+
 			entry := f.NewLogEntry(r)
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
