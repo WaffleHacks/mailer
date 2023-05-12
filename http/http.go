@@ -9,6 +9,8 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
 	"github.com/WaffleHacks/mailer/daemon"
@@ -44,9 +46,9 @@ func New(address string, queue chan daemon.Message) *http.Server {
 	router.Use(middleware.Recoverer)
 
 	router.Get("/health", healthcheck)
-	router.Post("/send", m.send)
-	router.Post("/send/batch", m.sendBatch)
-	router.Post("/send/template", m.sendTemplate)
+	router.Post("/send", withRouteTag("/send", m.send))
+	router.Post("/send/batch", withRouteTag("/send/batch", m.sendBatch))
+	router.Post("/send/template", withRouteTag("/send/template", m.sendTemplate))
 
 	return &http.Server{
 		Addr: address,
@@ -62,6 +64,14 @@ func New(address string, queue chan daemon.Message) *http.Server {
 func healthcheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(version.Printable))
+}
+
+func withRouteTag(route string, handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		span := trace.SpanFromContext(r.Context())
+		span.SetAttributes(semconv.HTTPRoute(route))
+		handler(w, r)
+	}
 }
 
 func serverName() string {
