@@ -42,6 +42,10 @@ func (d *Debug) formatMessage(to zap.Field, from, subject, body string, htmlBody
 	return fields
 }
 
+func (d *Debug) Name() string {
+	return "debug"
+}
+
 func (d *Debug) Send(ctx context.Context, l *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := debugTracer.Start(ctx, "send")
 	defer span.End()

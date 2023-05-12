@@ -3,6 +3,8 @@ package daemon
 import (
 	"context"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 // Daemon orchestrates processing and sending incoming messages
@@ -25,6 +27,12 @@ func New(ctx context.Context, matchers []*Matcher) *Daemon {
 
 	// Spawn the workers
 	for _, matcher := range matchers {
+		zap.L().Named("daemon").With(
+			zap.String("id", matcher.id),
+			zap.String("provider", matcher.provider.Name()),
+			zap.Int("workers", matcher.workers),
+		).Info("launching workers")
+
 		wg.Add(matcher.workers)
 		for i := 0; i < matcher.workers; i++ {
 			go worker(cancellable, matcher, &wg)

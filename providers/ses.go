@@ -29,6 +29,10 @@ type SES struct {
 	client *sesv2.Client
 }
 
+func (s *SES) Name() string {
+	return "ses"
+}
+
 func (s *SES) Send(ctx context.Context, _ *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := sesTracer.Start(ctx, "send")
 	defer span.End()

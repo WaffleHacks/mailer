@@ -19,6 +19,10 @@ type MailGun struct {
 	mg mailgun.Mailgun
 }
 
+func (m *MailGun) Name() string {
+	return "mailgun"
+}
+
 func (m *MailGun) Send(ctx context.Context, l *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := mailgunTracer.Start(ctx, "send")
 	defer span.End()

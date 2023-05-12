@@ -20,6 +20,10 @@ type SMTP struct {
 	open   bool
 }
 
+func (s *SMTP) Name() string {
+	return "smtp"
+}
+
 func (s *SMTP) Send(ctx context.Context, l *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := smtpTracer.Start(ctx, "send")
 	defer span.End()
