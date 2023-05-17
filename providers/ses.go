@@ -82,8 +82,9 @@ func NewSES(id string) (Provider, error) {
 	if len(secretKey) == 0 {
 		return nil, fmt.Errorf("missing secret key for ses provider %q", id)
 	}
+	sessionToken := os.Getenv(fmt.Sprintf("MAILER_PROVIDER_%s_SESSION_TOKEN", envId))
 
-	creds := credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")
+	creds := credentials.NewStaticCredentialsProvider(accessKey, secretKey, sessionToken)
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region), config.WithCredentialsProvider(creds))
 	if err != nil {
 		return nil, err
