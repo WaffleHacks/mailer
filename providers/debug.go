@@ -8,9 +8,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/ratelimit"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +25,7 @@ var (
 type Debug struct {
 	failureRate int
 	showBody    bool
+	limiter     ratelimit.Limiter
 }
 
 func (d *Debug) shouldError() error {
@@ -49,6 +52,8 @@ func (d *Debug) Name() string {
 func (d *Debug) Send(ctx context.Context, l *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := debugTracer.Start(ctx, "send")
 	defer span.End()
+
+	d.limiter.Take()
 
 	if err := d.shouldError(); err != nil {
 		span.SetAttributes(debugSimulatedErrorAttr.Bool(true))
@@ -93,8 +98,25 @@ func NewDebug(id string) (Provider, error) {
 		failureRate = rate
 	}
 
+	rawRateLimit := os.Getenv(fmt.Sprintf("MAILER_PROVIDER_%s_RATE_LIMIT", envId))
+	rl := ratelimit.NewUnlimited()
+	if len(rawRateLimit) != 0 {
+		perSecond, err := strconv.Atoi(rawRateLimit)
+		if err != nil {
+			return nil, err
+		}
+
+		if perSecond > 0 {
+			rl = ratelimit.New(perSecond, ratelimit.Per(time.Second), ratelimit.WithSlack(10))
+		}
+	}
+
 	rawShowBody := strings.ToLower(os.Getenv(fmt.Sprintf("MAILER_PROVIDER_%s_SHOW_BODY", envId)))
 	showBody := rawShowBody == "y" || rawShowBody == "yes" || rawShowBody == "t" || rawShowBody == "true"
 
-	return &Debug{failureRate: failureRate, showBody: showBody}, nil
+	return &Debug{
+		failureRate: failureRate,
+		showBody:    showBody,
+		limiter:     rl,
+	}, nil
 }
