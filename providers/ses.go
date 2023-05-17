@@ -3,8 +3,10 @@ package providers
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -13,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 	"go.opentelemetry.io/otel"
+	"go.uber.org/ratelimit"
 	"go.uber.org/zap"
 )
 
@@ -27,6 +30,7 @@ func newContent(data string) *types.Content {
 
 type SES struct {
 	client *sesv2.Client
+	rl     ratelimit.Limiter
 }
 
 func (s *SES) Name() string {
@@ -36,6 +40,8 @@ func (s *SES) Name() string {
 func (s *SES) Send(ctx context.Context, _ *zap.Logger, to, from, subject, body string, htmlBody, replyTo *string) error {
 	_, span := sesTracer.Start(ctx, "send")
 	defer span.End()
+
+	s.rl.Take()
 
 	input := &sesv2.SendEmailInput{
 		Content: &types.EmailContent{
@@ -91,7 +97,15 @@ func NewSES(id string) (Provider, error) {
 		return nil, err
 	}
 
+	// Get the sending limits
+	account, err := client.GetAccount(context.Background(), nil)
+	if err != nil {
+		return nil, err
+	}
+	perSecond := int(math.Round(account.SendQuota.MaxSendRate))
+
 	return &SES{
 		client: client,
+		rl:     ratelimit.New(perSecond, ratelimit.Per(time.Second), ratelimit.WithoutSlack),
 	}, nil
 }
