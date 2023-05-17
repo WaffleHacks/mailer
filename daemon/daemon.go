@@ -17,13 +17,13 @@ type Daemon struct {
 }
 
 // New spawns a new sender daemon to process all the incoming messages
-func New(ctx context.Context, matchers []*Matcher) *Daemon {
+func New(ctx context.Context, backlog int, matchers []*Matcher) *Daemon {
 	// Allow gracefully stopping the daemon
 	var wg sync.WaitGroup
 	cancellable, cancel := context.WithCancel(ctx)
 
 	// Create the incoming work queue
-	queue := make(chan Message)
+	queue := make(chan Message, backlog)
 
 	// Spawn the workers
 	for _, matcher := range matchers {

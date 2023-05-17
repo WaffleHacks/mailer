@@ -41,7 +41,7 @@ func main() {
 	defer logger.Sync()
 
 	// Setup the mailer daemon
-	mailer := daemon.New(ctx, config.Providers)
+	mailer := daemon.New(ctx, config.SendBacklog, config.Providers)
 
 	// Start the HTTP server
 	server := http.New(config.Address, mailer.Queue)

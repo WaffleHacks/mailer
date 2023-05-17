@@ -22,7 +22,7 @@ type Config struct {
 	LogLevel    zap.AtomicLevel
 	Development bool
 
-	Workers int
+	SendBacklog int
 
 	Tracing bool
 
@@ -43,6 +43,11 @@ func ReadConfig() (*Config, error) {
 	rawLevel := getEnvOrDefault("MAILER_LOG_LEVEL", "info")
 	level := zap.NewAtomicLevel()
 	if err := level.UnmarshalText([]byte(rawLevel)); err != nil {
+		return nil, err
+	}
+
+	sendBacklog, err := strconv.Atoi(getEnvOrDefault("MAILER_SEND_BACKLOG", "250"))
+	if err != nil {
 		return nil, err
 	}
 
@@ -88,6 +93,7 @@ func ReadConfig() (*Config, error) {
 		Address:     address,
 		LogLevel:    level,
 		Development: getEnvBool("MAILER_DEVELOPMENT"),
+		SendBacklog: sendBacklog,
 		Tracing:     getEnvBool("MAILER_ENABLE_TRACING"),
 		Providers:   configuredProviders,
 	}, nil
