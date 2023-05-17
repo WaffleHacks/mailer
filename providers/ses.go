@@ -107,6 +107,6 @@ func NewSES(id string) (Provider, error) {
 
 	return &SES{
 		client: client,
-		rl:     ratelimit.New(perSecond, ratelimit.Per(time.Second), ratelimit.WithoutSlack),
+		rl:     ratelimit.New(perSecond, ratelimit.Per(time.Second), ratelimit.WithSlack(10)),
 	}, nil
 }
