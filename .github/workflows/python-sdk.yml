@@ -1,0 +1,51 @@
+name: Python SDK
+
+on:
+  push:
+    paths:
+      - .github/workflows/python-sdk.yml
+      - sdks/python/**
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: poetry
+          cache-dependency-path: sdk/python/poetry.lock
+
+      - run: poetry install
+      - run: poetry build
+        working-directory: ./sdks/python
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: poetry
+          cache-dependency-path: sdk/python/poetry.lock
+
+      - run: poetry install
+      - run: poetry build
+        working-directory: ./sdks/python
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
+          packages_dir: ./sdks/python/dist
+          skip_existing: true
