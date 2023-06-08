@@ -15,6 +15,7 @@ import (
 
 	"github.com/WaffleHacks/mailer/daemon"
 	"github.com/WaffleHacks/mailer/logging"
+	"github.com/WaffleHacks/mailer/tracing"
 	"github.com/WaffleHacks/mailer/version"
 )
 
@@ -43,6 +44,7 @@ func New(address string, queue chan daemon.Message) *http.Server {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(logging.Request(zap.L().Named("http")))
+	router.Use(tracing.AddHeaders)
 	router.Use(middleware.Recoverer)
 
 	router.Get("/health", healthcheck)
